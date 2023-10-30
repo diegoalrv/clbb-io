@@ -1,5 +1,7 @@
-Django==3.2.8
-# Agrega aquí otras dependencias
+Django==4.2
+
+uuid
+pillow
 
 # Database
 dj_database_url==2.1.0

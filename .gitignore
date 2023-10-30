@@ -1,2 +1,4 @@
 *.pyc
 .env
+screenshots/
+.DS_Store
