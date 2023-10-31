@@ -1,2 +1,2 @@
-from .maps import Map, MapBase
+from .maps import Map
 from .slots import Slot
