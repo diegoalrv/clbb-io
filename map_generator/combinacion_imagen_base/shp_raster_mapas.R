@@ -1,11 +1,12 @@
+
 library(sf)
 library(raster)
 library(magick)
 
-
+# Sys.sleep(60)
 # Leer los datos
-shapefile <- st_read("C:/Users/helen/OneDrive/Documentos/Citylab/Indicadores/Seguridad/Manzanas_CityScope_Delitos_utm.shp")
-raster_data <- brick("C:/Users/helen/OneDrive/Documentos/Citylab/Maqueta/base2.tif")
+shapefile <- st_read("/app/data/shapefile/indicadores/seguridad/Manzanas_CityScope_Delitos_utm/Manzanas_CityScope_Delitos_utm.shp")
+raster_data <- brick("/app/data/raster/base2.tif")
 extent(raster_data) <- c(671610.9, 674360.3, 5920185, 5923530)
 
 # Tamaño de la hoja en pulgadas
@@ -18,7 +19,7 @@ alto_pixeles <- hoja_alto_pulgadas * 600    # 600 DPI
 
 
 # Abrir un dispositivo de salida PNG
-png("C:/Users/helen/OneDrive/Documentos/Citylab/Maqueta/mi_plot.png",
+png("/app/data/output/mi_plot.png",
     width = ancho_pixeles, height = alto_pixeles, units = "px", 
     res = 600, pointsize = 50)  # Ajusta el punto por pulgada (pointsize) según tus necesidades
 
@@ -31,7 +32,7 @@ dev.off()
 
 
 # Cargar la imagen PNG
-imagen <- image_read("C:/Users/helen/OneDrive/Documentos/Citylab/Maqueta/mi_plot.png")
+imagen <- image_read("/app/data/output/mi_plot.png")
 
 
 # Rotar la imagen en sentido horario 
@@ -40,10 +41,10 @@ imagen_rotada <- image_rotate(imagen, 295.3)
 # Guardar la imagen rotada
 
 
-image_write(imagen_rotada, "C:/Users/helen/OneDrive/Documentos/Citylab/Maqueta/mi_plot_rotada_.png", density = "300x300")
+image_write(imagen_rotada, "/app/data/output/mi_plot_rotada_.png", density = "300x300")
 
 # Cargar la imagen PNG
-imagen <- image_read("C:/Users/helen/OneDrive/Documentos/Citylab/Maqueta/mi_plot_rotada_.png")
+imagen <- image_read("/app/data/output/mi_plot_rotada_.png")
 
 # Coordenadas del área a recortar (izquierda, arriba, ancho, alto)
 x <- 8090  # Coordenada izquierda
@@ -62,7 +63,7 @@ imagen_espejo <- image_flop(imagen_recortada)
 
 
 # Guardar la imagen recortada
-image_write(imagen_espejo, "C:/Users/helen/OneDrive/Documentos/Citylab/Maqueta/mi_plot_rotada.png")
+image_write(imagen_espejo, "/app/data/output/mi_plot_rotada_.png")
 
 
 gc()

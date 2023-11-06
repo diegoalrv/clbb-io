@@ -3,3 +3,6 @@
 screenshots/
 .DS_Store
 instrucciones.txt
+map_generator/data/output/*
+map_generator/data/raster/*
+map_generator/data/shapefile/indicadores/seguridad/*
