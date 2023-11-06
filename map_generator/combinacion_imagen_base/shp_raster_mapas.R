@@ -3,7 +3,6 @@ library(sf)
 library(raster)
 library(magick)
 
-# Sys.sleep(60)
 # Leer los datos
 shapefile <- st_read("/app/data/shapefile/indicadores/seguridad/Manzanas_CityScope_Delitos_utm/Manzanas_CityScope_Delitos_utm.shp")
 raster_data <- brick("/app/data/raster/base2.tif")
@@ -25,11 +24,16 @@ png("/app/data/output/mi_plot.png",
 
 # Crear el plot
 plotRGB(raster_data)
-plot(shapefile, add = TRUE)
+colores <- colorRampPalette(c("yellow", "orange", "red"))(10)  # Ejemplo de paleta de colores personalizada
+
+# Crear un gráfico personalizado
+plot(shapefile["TOTAL_VIVI"], col = colores, add = TRUE)
+
+# Agregar una leyenda con la barra de colores
+legend("topright", legend = seq(min(shapefile$TOTAL_VIVI), max(shapefile$TOTAL_VIVI), length.out = 10), fill = colores)
 
 # Cerrar el dispositivo de salida PNG
 dev.off()
-
 
 # Cargar la imagen PNG
 imagen <- image_read("/app/data/output/mi_plot.png")
