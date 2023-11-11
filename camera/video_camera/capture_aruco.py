@@ -23,11 +23,11 @@ def detectar_aruco(imagen_path):
     if ids is not None:
         aruco.drawDetectedMarkers(imagen_resultado, corners, ids)
 
-    return imagen_resultado
+    return imagen_resultado, corners
 
 if __name__ == "__main__":
     imagen_path = "/Users/alonsodicandia/asesorias/clbb-io/camera/images/capture/imagen.jpg"  # Reemplaza con la ruta de tu imagen
-    imagen_resultado = detectar_aruco(imagen_path)
+    imagen_resultado, _ = detectar_aruco(imagen_path)
     # Mostrar la imagen con los marcadores detectados
     cv2.imshow('Marcadores ArUco Detectados', imagen_resultado)
     cv2.waitKey(0)
