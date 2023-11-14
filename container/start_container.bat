@@ -3,6 +3,9 @@
 set "ruta_host1=C:\Users\CityLab Biobio - DS\Dev\clbb-io\data"
 set "ruta_contenedor1=/app/data"
 
+set "ruta_host1=C:\Users\CityLab Biobio - DS\Dev\clbb-io\modules"
+set "ruta_contenedor1=/app/modules"
+
 set "ruta_host2=C:\Users\CityLab Biobio - DS\Dev\clbb-io\assets"
 set "ruta_contenedor2=/app/assets"
 
