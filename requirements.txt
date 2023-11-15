@@ -16,3 +16,4 @@ osmnet
 cs-brix
 us
 openpyxl
+pyarrow
