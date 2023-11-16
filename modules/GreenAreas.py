@@ -34,8 +34,11 @@ class GreenAreas(BaseModule):
         return list(self.current_scenario['ID_AV'].unique())
     
     def get_green_area_by_id(self, green_area_id):
-        mask = (self.current_scenario['ID_AV'] == green_area_id)
+        mask = (self.current_scenario['ID_AV'].isin([green_area_id]))
         return self.current_scenario[mask]
     
     def get_countour_by_id(self, green_area_id):
-        return list(self.get_green_area_by_id(green_area_id)['geometry'].exterior[0].coords)
+        return list(self.get_green_area_by_id(green_area_id).iloc[0]['geometry'].exterior.coords)
+    
+    def get_green_areas(self):
+        return self.current_scenario
