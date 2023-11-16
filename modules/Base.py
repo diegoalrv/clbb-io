@@ -29,6 +29,13 @@ class BaseModule():
                 self.num_plates += 1
         pass
 
+    def get_plate(self, plate_id):
+        try:
+            return self.plates[plate_id]
+        except:
+            print(f'Error getting plate {plate_id}, verify index')
+            return None
+
     def load_area_scope(self):
         area_scope_path = '/app/assets/area_scope'
         self.area_scope = gpd.read_file(area_scope_path).to_crs(self.default_crs)
