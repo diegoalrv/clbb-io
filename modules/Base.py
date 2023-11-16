@@ -23,5 +23,5 @@ class BaseModule():
 
     def load_area_scope(self):
         area_scope_path = '/app/assets/area_scope'
-        self.area_scope = gpd.read_file(area_scope_path)
+        self.area_scope = gpd.read_file(area_scope_path).to_crs(self.default_crs)
         pass
