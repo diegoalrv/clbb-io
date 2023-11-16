@@ -15,10 +15,18 @@ class BaseModule():
         plates_path = '/app/assets/plates'
         plates_files = glob.glob(os.path.join(plates_path, '*'))
         self.plates = {}
+        self.num_plates = 0
         for file in plates_files:
             idx = os.path.split(file)[-1]
-            plate = gpd.read_file(file).to_crs(self.default_crs)
-            self.plates[idx] = plate
+            if not idx.isdigit():
+            # Verifica si el nombre del archivo es un plate con numero
+                continue
+            else:
+            # Convierte idx en un entero antes de agregarlo al diccionario
+                idx = int(idx)
+                plate = gpd.read_file(file).to_crs(self.default_crs)
+                self.plates[idx] = plate
+                self.num_plates += 1
         pass
 
     def load_area_scope(self):
