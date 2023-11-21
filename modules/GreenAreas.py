@@ -9,6 +9,7 @@ class GreenAreas(BaseModule):
         super().__init__()
         self.cols = ['ID_AV', 'ID_PLACA', 'geometry']
         self.scenarios_status = [0]*self.num_plates
+        self.node_set = None
         self.load_data()
         pass
 
@@ -28,6 +29,10 @@ class GreenAreas(BaseModule):
         new_scenario = new_scenario[mask]
         
         self.current_scenario = pd.concat([self.current_scenario, new_scenario])
+        pass
+
+    def go_to_scenario(self, scenario_id):
+        self.current_scenario = self.scenarios[scenario_id]
         pass
 
     def get_green_areas_ids(self):

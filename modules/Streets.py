@@ -37,6 +37,12 @@ class Streets(BaseModule):
         self._make_network()
         pass
 
+    def go_to_scenario(self, scenario_id):
+        self.current_scenario = self.scenarios[scenario_id]
+        self._make_network()
+        self.scenarios_status = [scenario_id]*self.num_plates
+        pass
+
     def update_network(self, plate_id, scenario_id):
         self._update_plate_area(plate_id=plate_id, scenario_id=scenario_id)
         self._make_network()
