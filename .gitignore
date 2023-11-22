@@ -1,3 +1,4 @@
 data
 assets
+*__pycache__*
 # container

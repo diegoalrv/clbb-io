@@ -1,0 +1,44 @@
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+from glob import glob
+from modules.Base import BaseModule
+
+class Amenities(BaseModule):
+    def __init__(self) -> None:
+        super().__init__()
+        self.cols = ['id', 'Category', 'geometry']
+        self.scenarios_status = [0]*self.num_plates
+        self.node_set = None
+        self.load_data()
+        pass
+
+    def load_data(self):
+        self.scenarios = []
+
+        [self.scenarios.append(gpd.read_parquet(file)[self.cols].to_crs(self.default_crs)) for file in glob('/app/assets/amenities/*')]
+        self.current_scenario = self.scenarios[0]
+        self.categories = list(self.current_scenario['Category'].unique())
+        pass
+    
+    def go_to_scenario(self, scenario_id):
+        self.current_scenario = self.scenarios[scenario_id]
+        pass
+
+    def get_amenities_ids(self):
+        return list(self.current_scenario['id'].unique())
+    
+    def get_categories(self):
+        return self.categories
+    
+    def get_current_amenities(self):
+        return self.current_scenario
+    
+    def get_current_amenities_by_category(self, category):
+        return self.current_scenario[self.current_scenario['Category']==category]
+    
+    def amenities_points(self):
+        gdf = self.current_scenario
+        gdf['x'] = gdf['geometry'].x
+        gdf['y'] = gdf['geometry'].y
+        return gdf
