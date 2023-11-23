@@ -68,24 +68,21 @@ class Slider:
         return nuevo_y, nuevo_x
 
     def subdividir_recta(self, point1, point2):
-        def obtener_menor_tupla(tupla1, tupla2):
-            x1, y1 = tupla1
-            x2, y2 = tupla2
+        def obtener_menor_punto(tupla1, tupla2):
+            x = min([tupla1, tupla2], key=lambda punto: punto[0])
+            y = min([tupla1, tupla2], key=lambda punto: punto[1])
 
-            if y1 < y2 and x1 < x2:
-                return tupla1, tupla2
-            else:
-                return tupla2, tupla1
+            return x[0], y[1]
             
         def make_int_tuple(t):
             return (int(t[0]), int(t[1]))
-            
-        point1, point2 = obtener_menor_tupla(point1, point2)
-        print(point1, point2)
 
         # Calcular el point medio de la recta
         middle_point = ((point1[0] + point2[0]) / 2, (point1[1] + point2[1]) / 2)
+        print(point1, point2)
+        point1 = obtener_menor_punto(point1, point2)
         print(f"middle: {middle_point}")
+        print(f"Menor: {point1}")
 
         # Calcular dos points adicionales equidistantes
         first_point = ((point1[0] + (abs(point1[0] - middle_point[0]) / 4)),(point1[1] + (abs(point1[1] - middle_point[1]) / 4)))

@@ -19,6 +19,8 @@ def draw_horizontal_lines(frame, cords):
     frame = cv2.line(frame, (x_left, y_left), (x_right, y_right), (0, 255, 0), 2)
     return frame
 
+START_COMPARING = False
+
 # Abre la cámara (usualmente la cámara predeterminada, 0)
 cap = cv2.VideoCapture(0)
 img_path = "/Users/alonsodicandia/asesorias/clbb-io/camera/images/capture/imagen.jpg"
@@ -36,7 +38,7 @@ while True:
     image_with_aruco_marker, corners, ids = detectar_aruco(frame.copy())
 
     if ids is not None:
-        if len(ids) == 1:
+        if len(ids) == 1 and START_COMPARING:
             p1, p2 = slider.slider_line
 
             cv2.line(frame, p1, p2, line_color, 2)
@@ -62,9 +64,8 @@ while True:
                 print(e)
             cv2.imshow("Video con aruco", frame)
         elif len(ids) == 2:
-            INITIAL_SETUP = True
             images_with_circles = draw_horizontal_lines(frame, corners)
-            cv2.imshow("Video with lines", images_with_circles)
+            cv2.imshow("Video con aruco", images_with_circles)
         else:
             cv2.imshow("Video con aruco", image_with_aruco_marker)
     else:
@@ -74,6 +75,8 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         cv2.imwrite(img_path, frame)
         break
+    elif cv2.waitKey(1) & 0xFF == ord('s'):
+        START_COMPARING = True
 
 # Libera la cámara y cierra la ventana
 cap.release()
