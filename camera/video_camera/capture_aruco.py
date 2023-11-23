@@ -22,8 +22,11 @@ def detectar_aruco(imagen_path):
     imagen_resultado = imagen.copy()
     if ids is not None:
         aruco.drawDetectedMarkers(imagen_resultado, corners, ids)
+    
+    if ids is not None:
+        ids = list(map(lambda sublist: sublist[0], ids))
 
-    return imagen_resultado, corners
+    return imagen_resultado, corners, ids
 
 if __name__ == "__main__":
     imagen_path = "/Users/alonsodicandia/asesorias/clbb-io/camera/images/capture/imagen.jpg"  # Reemplaza con la ruta de tu imagen

@@ -1,14 +1,14 @@
 import cv2
 from capture_aruco import detectar_aruco
 
-def punto_arriba_izquierda(coordenada):
+def up_left_point(coordenada):
     up_left = min(coordenada[0], key=lambda punto: punto[0] + punto[1])
 
     return (int(up_left[0]), int(up_left[1]))
 
 def draw_lines(frame, cords):
     for cord in cords:
-        up_left = punto_arriba_izquierda(cord)
+        up_left = up_left_point(cord)
         height, width, _ = frame.shape
         
         # Calcular puntos finales de la línea en el borde izquierdo y derecho de la imagen
@@ -35,7 +35,7 @@ while True:
     # Muestra el fotograma en una ventana llamada 'Frame'
     # cv2.imshow('Frame', frame)
     if not LINES:
-        image_with_aruco_marker, corners = detectar_aruco(frame.copy())
+        image_with_aruco_marker, corners, ids = detectar_aruco(frame.copy())
 
     if len(corners) == 4:
         LINES = True
