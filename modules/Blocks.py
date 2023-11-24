@@ -7,7 +7,7 @@ from modules.Base import BaseModule
 class Blocks(BaseModule):
     def __init__(self, as_unit=False) -> None:
         super().__init__()
-        self.cols = ['block_id', 'q_residents', 'q_houses', 'ID_PLACA']
+        self.cols = ['block_id', 'q_residents', 'ID_PLACA']
         self.scenarios_status = [0]*self.num_plates
         self.as_unit = as_unit
         self.as_variable = ~as_unit
