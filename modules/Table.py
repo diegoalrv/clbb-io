@@ -133,7 +133,8 @@ class TableUserInferface(Base.BaseModule):
     ######################################################################
 
     def calc_sidewalk_kpis(self):
-        self.sm.calculate_scoring()
+        self.numeric_kpis['SidewalkMaterial'] = self.sm.calculate_scoring()
+        pass
         
     ######################################################################
     #### Funciones para calculo de densidades
