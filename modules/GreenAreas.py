@@ -5,9 +5,9 @@ from glob import glob
 from modules.Base import BaseModule
 
 class GreenAreas(BaseModule):
-    def __init__(self) -> None:
+    def __init__(self, mode=None) -> None:
         super().__init__()
-        self.cols = ['ID_AV', 'ID_PLACA', 'geometry']
+        self.cols = ['TIPO_EP', 'ID_AV', 'ID_PLACA', 'geometry']
         self.scenarios_status = [0]*self.num_plates
         self.node_set = None
         self.load_data()
@@ -15,7 +15,8 @@ class GreenAreas(BaseModule):
 
     def load_data(self):
         self.scenarios = []
-        [self.scenarios.append(gpd.read_file(file)[self.cols].to_crs(self.default_crs)) for file in glob('/app/assets/green_areas/*')]
+        # [self.scenarios.append(gpd.read_file(file)[self.cols].to_crs(self.default_crs)) for file in glob('/app/assets/green_areas/*')]
+        [self.scenarios.append(gpd.read_parquet(file)[self.cols].to_crs(self.default_crs)) for file in glob('/app/assets/green_areas/*.parquet')]
         [gdf['ID_PLACA'].fillna(0, inplace=True) for gdf in self.scenarios];
         self.current_scenario = self.scenarios[0]
         pass

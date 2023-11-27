@@ -42,3 +42,11 @@ class Amenities(BaseModule):
         gdf['x'] = gdf['geometry'].x
         gdf['y'] = gdf['geometry'].y
         return gdf
+    
+    def export_as_csv(self):
+        amenities = self.current_scenario.copy()
+        amenities = amenities.to_crs(4326)
+        amenities['x'] = amenities['geometry'].x
+        amenities['y'] = amenities['geometry'].y
+        amenities.to_csv('/app/data/output/amenities.csv', decimal=',', sep=';')
+        pass
