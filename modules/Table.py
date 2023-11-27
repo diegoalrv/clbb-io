@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from .myfunctions import *
 import itertools
-from modules import Base, Streets, GreenAreas, Amenities, LandUses, Blocks
+from modules import Base, Streets, GreenAreas, Amenities, LandUses, Blocks, SidewalkMaterial
 
 class TableUserInferface(Base.BaseModule):
     ######################################################################
@@ -20,6 +20,7 @@ class TableUserInferface(Base.BaseModule):
         self.am = Amenities.Amenities()
         self.lu = LandUses.LandUses()
         self.bk = Blocks.Blocks()
+        self.sm = SidewalkMaterial.SidewalkMaterial()
         self.modules_available = [
             'GreenAreas',
             'Streets',
@@ -34,6 +35,9 @@ class TableUserInferface(Base.BaseModule):
         self.present_scenario = 0
         self.load_unit()
         self.update_nodes_ids()
+
+        self.numeric_kpis = {}
+
         pass
 
     def change_scenario(self, scenario_id):
@@ -123,6 +127,13 @@ class TableUserInferface(Base.BaseModule):
         ga_nodes_set.reset_index(inplace=True, drop=True)
         self.ga.node_set = ga_nodes_set
         pass
+        
+    ######################################################################
+    #### Funciones para calculo de indicadores numericos
+    ######################################################################
+
+    def calc_sidewalk_kpis(self):
+        self.sm.calculate_scoring()
         
     ######################################################################
     #### Funciones para calculo de densidades
@@ -245,17 +256,12 @@ class TableUserInferface(Base.BaseModule):
 
         
     def calc_travel_time_to_green_areas(self):
-        # greenareas = tui.ga.node_set
-        # units = tui.unit
-        # net = tui.st.current_scenario['net']
         source = self.unit[[f'{self.select_unit}_id', 'node_ids']]
         destination = self.ga.node_set[['ID_AV', 'osmid']]
 
         combinations = list(itertools.product(source.to_records(index=False), destination.to_records(index=False)))
-        # Crea una nueva lista con 4 registros por elemento
         combinations_list = [list(item1) + list(item2) for item1, item2 in combinations]
         df_columns = ['hex_id', 'source', 'ID_AV', 'destination']
-        # Crea un DataFrame a partir de las combinaciones
         df_combinations = pd.DataFrame(combinations_list, columns=df_columns)
         df_combinations['path_lengths'] = self.st.current_scenario['net'].shortest_path_lengths(
             df_combinations['source'],
@@ -321,14 +327,14 @@ class TableUserInferface(Base.BaseModule):
     def get_travels_amenities_by_category(self, category):
         return self.gdf_am_paths[self.gdf_am_paths['Category']==category].drop(columns=['Category'])
     
-    def get_map_green_areas_by_class(self, green_area_class='PARQUE'):
+    def get_travels_green_areas_by_class(self, green_area_class='PARQUE'):
         _class  = {'PARQUE': 'PK', 'PLAZA': 'SQ'}[green_area_class]
         return self.gdf_ga_paths[self.gdf_ga_paths['class']==_class].reset_index()
     
     def get_maps_green_areas(self):
         ret = {}
         for _class in ['PARQUE', 'PLAZA']:
-            ret[_class] = self.get_map_green_areas_by_class(_class)
+            ret[_class] = self.get_travels_green_areas_by_class(_class)
         return ret
 
     ######################################################################
@@ -373,8 +379,10 @@ class TableUserInferface(Base.BaseModule):
         scenario_name = self.dict_scenarios[self.present_scenario]
         scenario_path = f'{path}/{scenario_name}'
         verificar_y_crear_directorio(scenario_path)
-        self.get_travels_green_areas().to_file(scenario_path)
-
+        ga_travels = self.get_travels_green_areas()
+        classes = list(ga_travels['class'].unique())
+        [ga_travels[ga_travels['class']==_class].to_file(f'{scenario_path}_class') for _class in classes];
+        
         if zipped:
             main = os.path.split(path)[-1]
             output_zip_path = f'/app/data/zip/{main}.zip'
