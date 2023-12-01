@@ -19,10 +19,15 @@ services:
       POSTGRES_DB: clbb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 486s4s89d65a600f2df9862s41f26
-  map_generator:
-    container_name: clbb_map_generator
-    build: ./map_generator/.
-    command: Rscript combinacion_imagen_base/shp_raster_mapas.R
-    volumes:
-      - ./map_generator/:/app/
+  # map_generator:
+  #   container_name: clbb_map_generator
+  #   build: ./map_generator/.
+  #   command: Rscript combinacion_imagen_base/shp_raster_mapas.R
+  #   volumes:
+  #     - ./map_generator/:/app/
+  dashboard:
+    container_name: clbb_react
+    build: ./clbb-dashboard/.
+    ports:
+      - "8600:3000"
 

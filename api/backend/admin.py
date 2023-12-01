@@ -8,7 +8,7 @@ class MapAdmin(admin.ModelAdmin):
 
 @admin.register(Slot)
 class SlotAdmin(admin.ModelAdmin):
-    list_display = ('name', 'number', 'project')
+    list_display = ('name', 'number', 'lego_image', 'aruco_marker')
 
 @admin.register(MapDistribution)
 class MapDistributionAdmin(admin.ModelAdmin):
