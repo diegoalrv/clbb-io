@@ -81,7 +81,7 @@ class TableUserInferface(Base.BaseModule):
             filename = f'/app/assets/groupby/block/{self.dict_scenarios[self.present_scenario]}.parquet'
             unit = gpd.read_parquet(filename).to_crs(self.default_crs)
         else:
-            unit = gpd.read_file(f'/app/assets/groupby/{self.select_unit}')
+            unit = gpd.read_parquet(f'/app/assets/groupby/{self.select_unit}.parquet')
         unit['centroid'] = unit['geometry'].centroid
         unit['area'] = unit['geometry'].area
         self.unit = unit
@@ -189,24 +189,41 @@ class TableUserInferface(Base.BaseModule):
     ######################################################################
 
     def calc_land_uses_diversity(self):
-        self.unit['area_unit'] = self.unit.area
-        # Intersection between land_uses and units
-        intersection = gpd.sjoin(self.unit, self.lu.get_current_land_uses(), how="inner", op="intersects")
-        intersection['area'] = intersection.area
-
-        # Filter intersection geodataframe by columns
-        inter_cols = [f'{self.select_unit}_id', 'Uso', 'area', 'area_unit', 'area_predio']
+        intersection = gpd.overlay(self.unit, self.lu.get_current_land_uses(), how='intersection')
+        intersection['area_pol_inter'] = intersection.area
+        intersection['area_unit'] = intersection['area']
+        inter_cols = [f'{self.select_unit}_id', 'Uso', 'area', 'area_pol_inter', 'area_unit', 'area_predio']
         intersection = intersection[inter_cols]
+        uses_inter_area = intersection.groupby([f'{self.select_unit}_id', 'Uso'])['area_pol_inter'].agg('sum').reset_index()
+        total_inter_area = intersection.groupby([f'{self.select_unit}_id'])['area_pol_inter'].agg('sum').reset_index().rename(columns={'area_pol_inter': 'inter_area'})
+        uses_inter_area = pd.merge(uses_inter_area, total_inter_area)
+        uses_inter_area = pd.merge(uses_inter_area, self.unit[[f'{self.select_unit}_id', 'area']].rename(columns={'area': 'unit_area'}))
+        uses_inter_area['property_percentage'] = uses_inter_area['area_pol_inter']/uses_inter_area['inter_area']
+        uses_inter_area['information_per_property'] = -1*uses_inter_area['property_percentage']*np.log(uses_inter_area['property_percentage'])
+        diversity = uses_inter_area.groupby(f'{self.select_unit}_id')['information_per_property'].agg('sum').reset_index()
 
-        total_inter_area = intersection.groupby([f'{self.select_unit}_id'])['area'].agg('sum').reset_index().rename(columns={'area': 'inter_area'})
-        intersection = pd.merge(intersection, total_inter_area, on=f'{self.select_unit}_id')
-        intersection['property_percentage'] = intersection['area']/intersection['inter_area']
-        intersection['information_per_property'] = -1*intersection['property_percentage']*np.log(intersection['property_percentage'])
-        diversity = intersection.groupby(f'{self.select_unit}_id')['information_per_property'].agg('sum').reset_index()
         diversity_map = pd.merge(diversity, self.unit, on=f'{self.select_unit}_id')
         diversity_map.rename(columns={'information_per_property': 'diversity'}, inplace=True)
         self.lu_diversity = gpd.GeoDataFrame(data=diversity_map['diversity'], geometry=diversity_map['geometry'])
-        self.unit.drop(columns=['area_unit'], inplace=True)
+
+        # self.unit['area_unit'] = self.unit.area
+        # # Intersection between land_uses and units
+        # intersection = gpd.sjoin(self.unit, self.lu.get_current_land_uses(), how="inner", op="intersects")
+        # intersection['area'] = intersection.area
+
+        # # Filter intersection geodataframe by columns
+        # inter_cols = [f'{self.select_unit}_id', 'Uso', 'area', 'area_unit', 'area_predio']
+        # intersection = intersection[inter_cols]
+
+        # total_inter_area = intersection.groupby([f'{self.select_unit}_id'])['area'].agg('sum').reset_index().rename(columns={'area': 'inter_area'})
+        # intersection = pd.merge(intersection, total_inter_area, on=f'{self.select_unit}_id')
+        # intersection['property_percentage'] = intersection['area']/intersection['inter_area']
+        # intersection['information_per_property'] = -1*intersection['property_percentage']*np.log(intersection['property_percentage'])
+        # diversity = intersection.groupby(f'{self.select_unit}_id')['information_per_property'].agg('sum').reset_index()
+        # diversity_map = pd.merge(diversity, self.unit, on=f'{self.select_unit}_id')
+        # diversity_map.rename(columns={'information_per_property': 'diversity'}, inplace=True)
+        # self.lu_diversity = gpd.GeoDataFrame(data=diversity_map['diversity'], geometry=diversity_map['geometry'])
+        # self.unit.drop(columns=['area_unit'], inplace=True)
         pass
 
     ######################################################################
@@ -347,7 +364,7 @@ class TableUserInferface(Base.BaseModule):
         self.save_land_uses_diversity()
         pass
 
-    def save_land_uses_diversity(self, path='/app/data/land_uses_diversity', zipped=True):
+    def save_land_uses_diversity(self, path='/app/data/output/land_uses_diversity', zipped=True):
         
         scenario_name = self.dict_scenarios[self.present_scenario]
         scenario_path = f'{path}/{scenario_name}'
@@ -356,10 +373,10 @@ class TableUserInferface(Base.BaseModule):
 
         if zipped:
             main = os.path.split(path)[-1]
-            output_zip_path = f'/app/data/zip/{main}.zip'
+            output_zip_path = f'/app/data/output/zip/{main}.zip'
             zip_folder(path, output_zip_path)
             
-    def save_amenities_travels(self, path='/app/data/amenities_proximity', zipped=True):
+    def save_amenities_travels(self, path='/app/data/output/amenities_proximity', zipped=True):
         
         categories = self.get_amenities_categories()
         scenario_name = self.dict_scenarios[self.present_scenario]
@@ -372,19 +389,19 @@ class TableUserInferface(Base.BaseModule):
 
         if zipped:
             main = os.path.split(path)[-1]
-            output_zip_path = f'/app/data/zip/{main}.zip'
+            output_zip_path = f'/app/data/output/zip/{main}.zip'
             zip_folder(path, output_zip_path)
             
-    def save_green_areas_travels(self, path='/app/data/green_areas_proximity', zipped=True):    
+    def save_green_areas_travels(self, path='/app/data/output/green_areas_proximity', zipped=True):    
         
         scenario_name = self.dict_scenarios[self.present_scenario]
         scenario_path = f'{path}/{scenario_name}'
         verificar_y_crear_directorio(scenario_path)
         ga_travels = self.get_travels_green_areas()
         classes = list(ga_travels['class'].unique())
-        [ga_travels[ga_travels['class']==_class].to_file(f'{scenario_path}_class') for _class in classes];
+        [ga_travels[ga_travels['class']==_class].to_file(os.path.join(path, f'{scenario_path}_{_class}')) for _class in classes];
         
         if zipped:
             main = os.path.split(path)[-1]
-            output_zip_path = f'/app/data/zip/{main}.zip'
+            output_zip_path = f'/app/data/output/zip/{main}.zip'
             zip_folder(path, output_zip_path)
