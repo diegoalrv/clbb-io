@@ -109,7 +109,7 @@ class Slider:
 
 
 
-        print(point1, point2)
+        # print(point1, point2)
 
 
         work_point = obtener_menor_punto(point1, point2)
@@ -123,8 +123,8 @@ class Slider:
             if work_point[1] > point1[1]:
                 direction = -1
 
-        print(f"middle: {middle_point}")
-        print(f"Menor: {work_point}")
+        # print(f"middle: {middle_point}")
+        # print(f"Menor: {work_point}")
 
         
 

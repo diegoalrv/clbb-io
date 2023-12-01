@@ -1,4 +1,5 @@
 import cv2
+import time
 from capture_aruco import detectar_aruco
 from slider import Slider
 from utils import up_right_point, up_left_point
@@ -42,23 +43,27 @@ while True:
     image_with_aruco_marker, corners, ids = detectar_aruco(frame.copy())
 
     if ids is not None:
-        if len(ids) == 1 and START_COMPARING:
+        if 0 in ids and START_COMPARING:
             p1, p2 = slider.slider_line
 
             cv2.line(frame, p1, p2, line_color, 2)
 
-            esquina_superior_izquierda = corners[0][0][0]
-            esquina_inferior_derecha = corners[0][0][2]
+            # print(corners, ids)
+            # break
+            index_aruco_zero = ids.index(0)
+            # print(index_aruco_zero)
+            esquina_superior_izquierda = corners[index_aruco_zero][0][0]
+            esquina_inferior_derecha = corners[index_aruco_zero][0][2]
             centro_x = int((esquina_superior_izquierda[0] + esquina_inferior_derecha[0]) // 2)
             centro_y = int((esquina_superior_izquierda[1] + esquina_inferior_derecha[1]) // 2)
 
             slider.center_one_aruco = (centro_x, centro_y)
-            slider.process_upper_corners_to_get_inclination(corners[0])
+            # print(slider.center_one_aruco)
+            # slider.process_upper_corners_to_get_inclination(corners[0])
 
             try:
                 line_division = slider.subdividir_recta(p1,p2)
 
-                print(line_division)
                 distances = []
 
                 for point in line_division:
@@ -75,9 +80,11 @@ while True:
             except Exception as e:
                 print(e)
             cv2.imshow("Video con aruco", frame)
-        elif len(ids) == 2:
-            images_with_circles = draw_horizontal_lines(frame, corners, START_COMPARING)
+            # continue
+        elif 1 in ids and 2 in ids and not START_COMPARING:
+            images_with_circles = draw_horizontal_lines(frame, corners)
             cv2.imshow("Video con aruco", images_with_circles)
+            START_COMPARING = True
         else:
             cv2.imshow("Video con aruco", image_with_aruco_marker)
     else:
