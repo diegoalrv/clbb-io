@@ -8,3 +8,4 @@ map_generator/data/raster/*
 map_generator/data/shapefile/indicadores/seguridad/*
 camera/clbb
 camera/images/*
+clbb-dashboard/node_modules
