@@ -203,6 +203,7 @@ class TableUserInferface(Base.BaseModule):
         count_cols = [f'{self.select_unit}_id', 'amenities_count', 'centroid', 'area']
         count_by_unit = gpd.GeoDataFrame(data=count_by_unit[count_cols], geometry=count_by_unit['geometry'])
         count_by_unit['density'] = count_by_unit['amenities_count']/count_by_unit['area']
+        count_by_unit.drop(columns=['centroid'], inplace=True)
         cat = category.lower().replace(' ', '_')
         self.heat_maps[f'{cat}_density'] = count_by_unit
         return count_by_unit
@@ -255,7 +256,14 @@ class TableUserInferface(Base.BaseModule):
 
         diversity_map = pd.merge(diversity, self.unit, on=f'{self.select_unit}_id')
         diversity_map.rename(columns={'information_per_property': 'diversity'}, inplace=True)
-        self.lu_diversity = gpd.GeoDataFrame(data=diversity_map['diversity'], geometry=diversity_map['geometry'])
+        self.lu_diversity = gpd.GeoDataFrame(data=diversity_map[[f'{self.select_unit}_id','diversity']], geometry=diversity_map['geometry'])
+        sub_unit = self.unit.copy()
+        unit_id = f'{self.select_unit}_id'
+        mask = ~sub_unit[unit_id].isin(self.lu_diversity[unit_id])
+        sub_unit = sub_unit[mask]
+        sub_unit['diversity'] = np.nan
+        self.lu_diversity = pd.concat([self.lu_diversity, sub_unit[[unit_id, 'diversity', 'geometry']]])
+        self.lu_diversity['diversity'].fillna(0, inplace=True)
         self.heat_maps['land_uses_diversity'] = self.lu_diversity
         pass
 
