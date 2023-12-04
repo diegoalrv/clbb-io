@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from .myfunctions import *
 import itertools
-from modules import Base, Streets, GreenAreas, Amenities, LandUses, Blocks, SidewalkMaterial
+from modules import Base, Streets, GreenAreas, Amenities, LandUses, Blocks, SidewalkMaterial, Buildings
 
 class TableUserInferface(Base.BaseModule):
     ######################################################################
@@ -21,12 +21,14 @@ class TableUserInferface(Base.BaseModule):
         self.lu = LandUses.LandUses()
         self.bk = Blocks.Blocks()
         self.sm = SidewalkMaterial.SidewalkMaterial()
+        self.bl = Buildings.Buildings()
         self.modules_available = [
             'GreenAreas',
             'Streets',
             'Amenities',
             'LandUses',
             'Blocks',
+            'Buildings',
         ]
         self.dict_scenarios = {
             0: 'actual',
@@ -37,6 +39,7 @@ class TableUserInferface(Base.BaseModule):
         self.update_nodes_ids()
 
         self.numeric_kpis = {}
+        self.heat_maps = {}
 
         pass
 
@@ -47,6 +50,7 @@ class TableUserInferface(Base.BaseModule):
             self.am.go_to_scenario(scenario_id)
             self.lu.go_to_scenario(scenario_id)
             self.bk.go_to_scenario(scenario_id)
+            self.bl.go_to_scenario(scenario_id)
             self.update_nodes_ids()
             self.present_scenario=scenario_id
             if self.select_unit == 'block': self.load_unit(select_unit='block')
@@ -58,10 +62,13 @@ class TableUserInferface(Base.BaseModule):
         self.calc_unit_node_ids()
     
     def calc_heatmaps_kpis(self):
-        if 'Amenities' in self.modules_available: self.calc_travel_time_to_amenities()
+        if 'Amenities' in self.modules_available:
+            self.calc_travel_time_to_amenities()
+            self.calc_amenities_density_interested_category()
         if 'GreenAreas' in self.modules_available: self.calc_travel_time_to_green_areas()
         if 'LandUses' in self.modules_available: self.calc_land_uses_diversity()
         if 'Blocks' in self.modules_available: self.calc_population_density()
+        if 'Buildings' in self.modules_available: self.calc_building_density()
         pass
 
     def calc_numeric_kpis(self):
@@ -69,6 +76,7 @@ class TableUserInferface(Base.BaseModule):
         if 'GreenAreas' in self.modules_available: pass
         if 'LandUses' in self.modules_available: pass
         if 'Blocks' in self.modules_available: pass
+        if 'Buildings' in self.modules_available: pass
         pass 
 
     ######################################################################    
@@ -167,6 +175,7 @@ class TableUserInferface(Base.BaseModule):
         ppl_density_cols = [f'{self.select_unit}_id', 'population', 'density', 'geometry_x']
         population_density = population_density[ppl_density_cols]
         self.population_density = gpd.GeoDataFrame(data=population_density.drop(columns=['geometry_x']), geometry=population_density['geometry_x'])
+        self.heat_maps['population_density'] = self.population_density
         pass
     
     def calc_amenities_density(self):
@@ -183,7 +192,49 @@ class TableUserInferface(Base.BaseModule):
         self.amenities_density = count_by_unit
         pass
 
+    def calc_amenities_density_by_category(self, category):
+        amenities = self.am.get_current_amenities().copy()
+        amenities = amenities[amenities['Category']==category]
+        join_result = gpd.sjoin(amenities, self.unit, how='inner', op='within')
+        # count_by_unit = join_result.groupby(f'{select_unit}_id')['counter'].agg('sum').reset_index()
+        count_by_unit = join_result.groupby(f'{self.select_unit}_id').size().reset_index(name='amenities_count')
+        count_by_unit = pd.merge(count_by_unit, self.unit, on=[f'{self.select_unit}_id'], how='outer')
+        count_by_unit['amenities_count'].fillna(0, inplace=True)
+        count_cols = [f'{self.select_unit}_id', 'amenities_count', 'centroid', 'area']
+        count_by_unit = gpd.GeoDataFrame(data=count_by_unit[count_cols], geometry=count_by_unit['geometry'])
+        count_by_unit['density'] = count_by_unit['amenities_count']/count_by_unit['area']
+        cat = category.lower().replace(' ', '_')
+        self.heat_maps[f'{cat}_density'] = count_by_unit
+        return count_by_unit
 
+    def calc_amenities_density_interested_category(self, interested_category=[]):
+        if(len(interested_category)==0):
+            interested_category = ['Educacion', 'Cultura', 'Cuidados']
+        self.amenities_density_by_category = {}
+        for category in interested_category:
+            self.amenities_density_by_category[category] = self.calc_amenities_density_by_category(category=category)
+        pass
+
+    def calc_building_density(self):
+        unit = self.unit.copy()
+        unit_cols = [f'{self.select_unit}_id', 'area', 'geometry']
+        unit = unit[unit_cols]
+
+        buildings = self.bl.get_current_scenario().copy()
+        buildings['area_construida'] = buildings.area
+        buildings_cols = ['Pisos', 'Metros', 'area_construida', 'geometry']
+        buildings = buildings[buildings_cols]
+        
+        joined_gdf = gpd.sjoin(unit, buildings)
+        grouped_gdf = joined_gdf.groupby([f'{self.select_unit}_id'])['area_construida'].agg(['sum','count']).reset_index()
+        merged_gdf = pd.merge(unit, grouped_gdf, on=f'{self.select_unit}_id')
+        merged_gdf.rename(columns={'sum':'area_construida_total', 'count':'density'}, inplace=True)
+        concat_gdf = pd.concat([merged_gdf, unit[~unit[f'{self.select_unit}_id'].isin(merged_gdf[f'{self.select_unit}_id'])]])
+        concat_gdf['density'].fillna(0, inplace=True)
+        concat_gdf['area_construida_total'].fillna(0, inplace=True)
+        self.heat_maps[f'building_density'] = concat_gdf.copy()
+        pass
+    
     ######################################################################
     #### Funciones para calculo de diversidad
     ######################################################################
@@ -205,25 +256,7 @@ class TableUserInferface(Base.BaseModule):
         diversity_map = pd.merge(diversity, self.unit, on=f'{self.select_unit}_id')
         diversity_map.rename(columns={'information_per_property': 'diversity'}, inplace=True)
         self.lu_diversity = gpd.GeoDataFrame(data=diversity_map['diversity'], geometry=diversity_map['geometry'])
-
-        # self.unit['area_unit'] = self.unit.area
-        # # Intersection between land_uses and units
-        # intersection = gpd.sjoin(self.unit, self.lu.get_current_land_uses(), how="inner", op="intersects")
-        # intersection['area'] = intersection.area
-
-        # # Filter intersection geodataframe by columns
-        # inter_cols = [f'{self.select_unit}_id', 'Uso', 'area', 'area_unit', 'area_predio']
-        # intersection = intersection[inter_cols]
-
-        # total_inter_area = intersection.groupby([f'{self.select_unit}_id'])['area'].agg('sum').reset_index().rename(columns={'area': 'inter_area'})
-        # intersection = pd.merge(intersection, total_inter_area, on=f'{self.select_unit}_id')
-        # intersection['property_percentage'] = intersection['area']/intersection['inter_area']
-        # intersection['information_per_property'] = -1*intersection['property_percentage']*np.log(intersection['property_percentage'])
-        # diversity = intersection.groupby(f'{self.select_unit}_id')['information_per_property'].agg('sum').reset_index()
-        # diversity_map = pd.merge(diversity, self.unit, on=f'{self.select_unit}_id')
-        # diversity_map.rename(columns={'information_per_property': 'diversity'}, inplace=True)
-        # self.lu_diversity = gpd.GeoDataFrame(data=diversity_map['diversity'], geometry=diversity_map['geometry'])
-        # self.unit.drop(columns=['area_unit'], inplace=True)
+        self.heat_maps['land_uses_diversity'] = self.lu_diversity
         pass
 
     ######################################################################
@@ -270,6 +303,11 @@ class TableUserInferface(Base.BaseModule):
         self.gdf_am_paths = self.gdf_am_paths[columns]
 
         self.gdf_am_paths['travel_time'] = self.gdf_am_paths['path_lengths'].apply(calcular_tiempo)
+
+        categories = self.gdf_am_paths['Category'].unique()
+        for category in categories:
+            cat = category.lower().replace(' ','_')
+            self.heat_maps[f'{cat}_proximity'] = self.gdf_am_paths[self.gdf_am_paths['Category']==category].reset_index()
         pass
 
         
@@ -291,33 +329,10 @@ class TableUserInferface(Base.BaseModule):
         min_paths['travel_time'] = min_paths['path_lengths'].apply(calcular_tiempo)
         min_paths = pd.merge(min_paths, self.unit[[f'{self.select_unit}_id', 'geometry']], on=[f'{self.select_unit}_id'])
         self.gdf_ga_paths = gpd.GeoDataFrame(data=min_paths.drop(columns=['geometry']), geometry=min_paths['geometry'])
-        # for idx in range(len(self.unit)):
-        #     source = self.unit.loc[idx, 'node_ids']
-        #     source = [source]*len(self.ga.node_set)
-        #     destination = self.ga.node_set['osmid']
-        #     paths = self.st.current_scenario['net'].shortest_path_lengths(source, self.ga.node_set['osmid'])
-        #     paths_df = pd.DataFrame.from_dict({
-        #         'source': source,
-        #         'destination': destination,
-        #         'path_lengths': paths
-        #     })
-        #     paths_df.sort_values(by=['path_lengths'], inplace=True)
-        #     # display(paths_df)
-        #     paths_df.reset_index(inplace=True, drop=True)
-        #     paths_df = paths_df.head(1)
-        #     paths_df['ID_AV'] = self.ga.node_set[self.ga.node_set['osmid'] == paths_df.loc[0,'destination']]['ID_AV'].values[0]
-        #     paths_df[f'{self.select_unit}_id'] = self.unit.loc[idx, f'{self.select_unit}_id']
-        #     paths_output.append(paths_df)
-
-        # paths_output = pd.concat(paths_output)
-        # paths_output.reset_index(inplace=True, drop=True)
-        # paths_output = pd.merge(paths_output, self.unit, on=f'{self.select_unit}_id')
-
-        # columns = ['source', 'destination', 'path_lengths', 'ID_AV', f'{self.select_unit}_id', 'geometry']
-        # self.gdf_ga_paths = gpd.GeoDataFrame(data=paths_output.drop(columns=['geometry']), geometry=paths_output['geometry'])
-        # self.gdf_ga_paths = self.gdf_ga_paths[columns]
-
-        # self.gdf_ga_paths['travel_time'] = self.gdf_ga_paths['path_lengths'].apply(calcular_tiempo)
+        
+        for real_class, _class in {'PARQUE': 'PK', 'PLAZA': 'SQ'}.items():
+            r_class = real_class.lower()
+            self.heat_maps[f'{r_class}_proximity'] = self.gdf_ga_paths[self.gdf_ga_paths['class']==_class].reset_index()
         pass
 
     ######################################################################
@@ -359,9 +374,10 @@ class TableUserInferface(Base.BaseModule):
     #### Funciones de flujo de datos y archivos
     ######################################################################
     def save_heatmaps(self):
-        self.save_amenities_travels()
-        self.save_green_areas_travels()
-        self.save_land_uses_diversity()
+        scenario_str = self.dict_scenarios[self.present_scenario]
+        path = os.path.join('/app/data/output', scenario_str)
+        verificar_y_crear_directorio(path)
+        [gdf.to_file(os.path.join(path, key)) for key, gdf in self.heat_maps.items()];
         pass
 
     def save_land_uses_diversity(self, path='/app/data/output/land_uses_diversity', zipped=True):
