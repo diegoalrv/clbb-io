@@ -1,6 +1,7 @@
 from django.contrib import admin
 from backend.models.maps import Map
 from backend.models.slots import Slot
+from backend.models.coins import Coin
 
 @admin.register(Map)
 class MapAdmin(admin.ModelAdmin):
@@ -8,4 +9,8 @@ class MapAdmin(admin.ModelAdmin):
 
 @admin.register(Slot)
 class SlotAdmin(admin.ModelAdmin):
+    list_display = ('name', 'number')
+
+@admin.register(Coin)
+class CoinAdmin(admin.ModelAdmin):
     list_display = ('name', 'number')

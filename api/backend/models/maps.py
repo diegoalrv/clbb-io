@@ -3,12 +3,14 @@ from django.utils.text import slugify
 from uuid import uuid4
 
 from backend.models.slots import Slot
+from backend.models.coins import Coin
     
 class Map(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=250)
     slider = models.PositiveIntegerField()  # Campo entero positivo
-    slot = models.ForeignKey(Slot, on_delete=models.CASCADE)
+    slot = models.ForeignKey(Slot, on_delete=models.CASCADE, blank=True, null=True)
+    coin = models.ForeignKey(Coin, on_delete=models.CASCADE, blank=True, null=True)
     slug = models.SlugField(unique=True, max_length=250, blank=True)
     image = models.ImageField(upload_to='maps/')
 

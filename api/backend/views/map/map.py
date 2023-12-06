@@ -13,8 +13,13 @@ class MapViewSet(viewsets.ModelViewSet):
         slider_param = self.request.query_params.get('slider', None)
         slot_param = self.request.query_params.get('slot', None)
 
+        coin_param = self.request.query_params.get('coin', None)
+
         # Filtra por slider si el parámetro está presente
         if slider_param is not None and slot_param is not None:
             queryset = queryset.filter(slider=slider_param, slot__number=slot_param)
+
+        elif coin_param is not None:
+            queryset = queryset.filter(coin__number=coin_param)
 
         return queryset
