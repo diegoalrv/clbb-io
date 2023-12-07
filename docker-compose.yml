@@ -1,14 +1,14 @@
 version: '3'
 services:
-  clbb-io-modules:
-    image: urban_indicators
-    container_name: clbb-io-modules
-    environment:
-      - JUPYTER_TOKEN=""
-    ports:
-      - "9090:9090"
+  myapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
-      - "C:\\Users\\CityLab Biobio - DS\\Dev\\clbb-io\\data:/app/data"
-      - "C:\\Users\\CityLab Biobio - DS\\Dev\\clbb-io\\modules:/app/modules"
-      - "C:\\Users\\CityLab Biobio - DS\\Dev\\clbb-io\\assets:/app/assets"
-      - "C:\\Users\\CityLab Biobio - DS\\Dev\\clbb-io\\backup:/app/backup"
+      - ./data:/app/data
+      - ./modules:/app/modules
+      - ./assets:/app/assets
+      - ./backup:/app/backup
+      - ./export:/app/export
+      - ./logs:/app/logs
+

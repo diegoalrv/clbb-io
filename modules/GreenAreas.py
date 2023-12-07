@@ -7,7 +7,7 @@ from modules.Base import BaseModule
 class GreenAreas(BaseModule):
     def __init__(self, mode=None) -> None:
         super().__init__()
-        self.cols = ['TIPO_EP', 'ID_AV', 'ID_PLACA', 'geometry']
+        self.cols = ['TIPO_EP', 'ID_AV', 'plate_id', 'geometry']
         self.scenarios_status = [0]*self.num_plates
         self.node_set = None
         self.load_data()
@@ -17,19 +17,22 @@ class GreenAreas(BaseModule):
         self.scenarios = []
         # [self.scenarios.append(gpd.read_file(file)[self.cols].to_crs(self.default_crs)) for file in glob('/app/assets/green_areas/*')]
         [self.scenarios.append(gpd.read_parquet(file)[self.cols].to_crs(self.default_crs)) for file in glob('/app/assets/green_areas/*.parquet')]
-        [gdf['ID_PLACA'].fillna(0, inplace=True) for gdf in self.scenarios];
+        [gdf['plate_id'].fillna(0, inplace=True) for gdf in self.scenarios];
         self.current_scenario = self.scenarios[0]
         pass
 
-    def update_plate_area(self, plate_id, scenario_id):
-        mask = self.current_scenario['ID_PLACA'] == plate_id
-        self.current_scenario = self.current_scenario[~mask]
-
-        new_scenario = self.scenarios[scenario_id]
-        mask = new_scenario['ID_PLACA'] == plate_id
-        new_scenario = new_scenario[mask]
+    def _update_plate_area(self, plate_id, scenario_id):
         
-        self.current_scenario = pd.concat([self.current_scenario, new_scenario])
+        current_data = self.current_scenario
+        current_data = current_data[current_data['plate_id']!=plate_id]
+
+        new_data = self.scenarios[scenario_id]
+        new_data = new_data[new_data['plate_id']==plate_id]
+
+        update_data = pd.concat([current_data, new_data])
+        update_data = gpd.GeoDataFrame(data=update_data.drop(columns=['geometry']), geometry=update_data['geometry'])
+
+        self.current_scenario = update_data
         pass
 
     def go_to_scenario(self, scenario_id):

@@ -19,17 +19,20 @@ class LandUses(BaseModule):
             self.current_scenario = self.scenarios[0]
             pass
 
-        def update_plate_area(self, plate_id, scenario_id):
-            # mask = self.current_scenario['ID_PLACA'] == plate_id
-            # self.current_scenario = self.current_scenario[~mask]
-
-            # new_scenario = self.scenarios[scenario_id]
-            # mask = new_scenario['ID_PLACA'] == plate_id
-            # new_scenario = new_scenario[mask]
+        def _update_plate_area(self, plate_id, scenario_id):
             
-            # self.current_scenario = pd.concat([self.current_scenario, new_scenario])
-            pass
+            current_data = self.current_scenario
+            current_data = current_data[current_data['plate_id']!=plate_id]
 
+            new_data = self.scenarios[scenario_id]
+            new_data = new_data[new_data['plate_id']==plate_id]
+
+            update_data = pd.concat([current_data, new_data])
+            update_data = gpd.GeoDataFrame(data=update_data.drop(columns=['geometry']), geometry=update_data['geometry'])
+
+            self.current_scenario = update_data
+            pass
+ 
         def get_current_land_uses(self):
              return self.current_scenario
 

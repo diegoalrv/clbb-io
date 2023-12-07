@@ -1,5 +1,5 @@
 # Establece la imagen base
-FROM python:3.9-slim
+FROM python:3.9
 
 # Establece el directorio de trabajo en el contenedor
 WORKDIR /app
@@ -22,5 +22,8 @@ RUN apt-get update && apt-get install -y \
 # Copia el código fuente al directorio de trabajo
 COPY . .
 
+# Expone el puerto 9090
+EXPOSE 9090
+
 # Configura Jupyter Notebook como el comando por defecto para ejecutar la aplicación
-CMD ["python", "app.py"]
+CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=9090", "--no-browser", "--allow-root", "--NotebookApp.token=..."]

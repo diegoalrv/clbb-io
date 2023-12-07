@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from .myfunctions import *
 import itertools
-from modules import Base, Streets, GreenAreas, Amenities, LandUses, Blocks, SidewalkMaterial, Buildings
+from modules import Base, Streets, GreenAreas, Amenities, LandUses, Blocks, SidewalkMaterial, Buildings, Bikeways
 
 class TableUserInferface(Base.BaseModule):
     ######################################################################
@@ -22,6 +22,7 @@ class TableUserInferface(Base.BaseModule):
         self.bk = Blocks.Blocks()
         self.sm = SidewalkMaterial.SidewalkMaterial()
         self.bl = Buildings.Buildings()
+        self.bw = Bikeways.Bikeways()
         self.modules_available = [
             'GreenAreas',
             'Streets',
@@ -29,6 +30,7 @@ class TableUserInferface(Base.BaseModule):
             'LandUses',
             'Blocks',
             'Buildings',
+            'Bikeways',
         ]
         self.dict_scenarios = {
             0: 'actual',
@@ -43,6 +45,17 @@ class TableUserInferface(Base.BaseModule):
 
         pass
 
+    def update_plate_status(self, plate_id, scenario_id):
+        self.plate_states[plate_id] = scenario_id
+        self.st._update_plate_area(plate_id,scenario_id)
+        self.ga._update_plate_area(plate_id,scenario_id)
+        self.am._update_plate_area(plate_id,scenario_id)
+        self.lu._update_plate_area(plate_id,scenario_id)
+        self.bk._update_plate_area(plate_id,scenario_id)
+        self.bl._update_plate_area(plate_id,scenario_id)
+        self.update_nodes_ids()
+
+
     def change_scenario(self, scenario_id):
         if self.present_scenario!=scenario_id:
             self.st.go_to_scenario(scenario_id)
@@ -51,6 +64,7 @@ class TableUserInferface(Base.BaseModule):
             self.lu.go_to_scenario(scenario_id)
             self.bk.go_to_scenario(scenario_id)
             self.bl.go_to_scenario(scenario_id)
+            self.bw.go_to_scenario(scenario_id)
             self.update_nodes_ids()
             self.present_scenario=scenario_id
             if self.select_unit == 'block': self.load_unit(select_unit='block')
@@ -77,6 +91,7 @@ class TableUserInferface(Base.BaseModule):
         if 'LandUses' in self.modules_available: pass
         if 'Blocks' in self.modules_available: pass
         if 'Buildings' in self.modules_available: pass
+        if 'Bikeways' in self.modules_available: pass
         pass 
 
     ######################################################################    
@@ -102,8 +117,7 @@ class TableUserInferface(Base.BaseModule):
             self.unit['centroid'].x,
             self.unit['centroid'].y
         )
-        pass
-    
+        pass    
 
     ######################################################################
     #### Funciones para identificar nodos en lugares
@@ -142,6 +156,10 @@ class TableUserInferface(Base.BaseModule):
 
     def calc_sidewalk_kpis(self):
         self.numeric_kpis['SidewalkMaterial'] = self.sm.calculate_scoring()
+        pass
+
+    def calc_bicycle_route_kpis(self):
+        self.numeric_kpis['BicycleRouteMeters'] = self.bw.calculate_lineal_meters_by_neighborhoods()
         pass
         
     ######################################################################

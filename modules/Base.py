@@ -15,6 +15,7 @@ class BaseModule():
         plates_path = '/app/assets/plates'
         plates_files = glob.glob(os.path.join(plates_path, '*'))
         self.plates = {}
+        self.plate_states = {}
         self.num_plates = 0
         for file in plates_files:
             idx = os.path.split(file)[-1]
@@ -26,6 +27,7 @@ class BaseModule():
                 idx = int(idx)
                 plate = gpd.read_file(file).to_crs(self.default_crs)
                 self.plates[idx] = plate
+                self.plate_states[idx] = 0
                 self.num_plates += 1
         pass
 

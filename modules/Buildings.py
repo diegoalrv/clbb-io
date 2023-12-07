@@ -25,3 +25,17 @@ class Buildings(BaseModule):
     def go_to_scenario(self, scenario_id):
         self.current_scenario = self.scenarios[scenario_id]
         pass
+
+    def _update_plate_area(self, plate_id, scenario_id):
+        
+        current_data = self.current_scenario
+        current_data = current_data[current_data['plate_id']!=plate_id]
+
+        new_data = self.scenarios[scenario_id]
+        new_data = new_data[new_data['plate_id']==plate_id]
+
+        update_data = pd.concat([current_data, new_data])
+        update_data = gpd.GeoDataFrame(data=update_data.drop(columns=['geometry']), geometry=update_data['geometry'])
+
+        self.current_scenario = update_data
+        pass

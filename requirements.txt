@@ -9,8 +9,8 @@ folium
 contextily
 osmnx
 networkx
-jupyter
-ipykernel
+# jupyter
+# ipykernel
 pandana
 osmnet
 cs-brix

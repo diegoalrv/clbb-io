@@ -7,7 +7,7 @@ from modules.Base import BaseModule
 class Amenities(BaseModule):
     def __init__(self) -> None:
         super().__init__()
-        self.cols = ['id', 'Category', 'geometry']
+        self.cols = ['id', 'Category', 'plate_id', 'geometry']
         self.scenarios_status = [0]*self.num_plates
         self.node_set = None
         self.load_data()
@@ -49,4 +49,18 @@ class Amenities(BaseModule):
         amenities['x'] = amenities['geometry'].x
         amenities['y'] = amenities['geometry'].y
         amenities.to_csv('/app/data/output/amenities.csv', decimal=',', sep=';')
+        pass
+    
+    def _update_plate_area(self, plate_id, scenario_id):
+        
+        current_data = self.current_scenario
+        current_data = current_data[current_data['plate_id']!=plate_id]
+
+        new_data = self.scenarios[scenario_id]
+        new_data = new_data[new_data['plate_id']==plate_id]
+
+        update_data = pd.concat([current_data, new_data])
+        update_data = gpd.GeoDataFrame(data=update_data.drop(columns=['geometry']), geometry=update_data['geometry'])
+
+        self.current_scenario = update_data
         pass
