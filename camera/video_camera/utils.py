@@ -1,15 +1,26 @@
-def up_left_point(coordenada):
-    up_left = min(coordenada[0], key=lambda punto: punto[0] + punto[1])
-    return (int(up_left[0]), int(up_left[1]))
+import cv2 
 
-def up_right_point(coordenada):
-    up_right = max(coordenada[0], key=lambda punto: punto[0] - punto[1])
-    return (int(up_right[0]), int(up_right[1]))
+def calculate_center(cord):
+    esquina_superior_izquierda = cord[0][0]
+    esquina_inferior_derecha = cord[0][2]
+    centro_x = int((esquina_superior_izquierda[0] + esquina_inferior_derecha[0]) // 2)
+    centro_y = int((esquina_superior_izquierda[1] + esquina_inferior_derecha[1]) // 2)
 
-def low_left_point(coordenada):
-    low_left = max(coordenada[0], key=lambda punto: punto[0] - punto[1])
-    return (int(low_left[0]), int(low_left[1]))
+    return (centro_x, centro_y)
 
-def low_right_point(coordenada):
-    low_right = max(coordenada[0], key=lambda punto: (punto[0], punto[1]))
-    return (int(low_right[0]), int(low_right[1]))
+def draw_horizontal_lines(frame, cord1, cord2, slider, start_comparing = False):
+    
+    cord_1 = calculate_center(cord1)
+    cord_2 = calculate_center(cord2)
+
+    if not start_comparing:
+        slider.slider_line = cord_1, cord_2
+
+    x_1 = cord_1[0]
+    y_1 = cord_1[1]
+    x_2 = cord_2[0]
+    y_2 = cord_2[1]
+    
+    # Dibujar la línea
+    frame = cv2.line(frame, (x_1, y_1), (x_2, y_2), (0, 255, 0), 2)
+    return frame

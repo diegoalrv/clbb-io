@@ -14,7 +14,7 @@ def combinar_imagenes(ruta_carpeta, nombre_salida, espacio_blanco=5):
     ancho, alto = primera_imagen.size
 
     # Calcula el número de filas y columnas
-    columnas = 2
+    columnas = 4
     filas = (len(imagenes) + columnas - 1) // columnas
 
     # Calcula las dimensiones de la imagen combinada

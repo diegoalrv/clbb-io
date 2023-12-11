@@ -9,7 +9,7 @@ class MapAdmin(admin.ModelAdmin):
 
 @admin.register(Slot)
 class SlotAdmin(admin.ModelAdmin):
-    list_display = ('name', 'number')
+    list_display = ('name', 'aruco_id')
 
 @admin.register(Coin)
 class CoinAdmin(admin.ModelAdmin):

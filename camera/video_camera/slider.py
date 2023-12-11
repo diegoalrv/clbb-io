@@ -1,5 +1,4 @@
 import math
-from utils import up_right_point, up_left_point
 
 class Slider:
     def __init__(self):
@@ -31,28 +30,6 @@ class Slider:
         right = two_points[1]
         self._left_point = left
         self._right_point = right
-    
-    def process_upper_corners_to_get_inclination(self, corner):
-        up_left = up_left_point(corner)
-        up_right = up_right_point(corner)
-
-        y1, x1 = up_left
-        y2, x2 = up_right
-
-        # Calcular la diferencia en y y la diferencia en x
-        delta_y = y2 - y1
-        delta_x = x2 - x1
-
-        self.delta_x = delta_x
-        self.delta_y = delta_y
-
-        # Calcular el ángulo de inclinación en radianes
-        angulo_radianes = math.atan2(delta_y, delta_x)
-
-        # # Convertir el ángulo a grados
-        # angulo_grados = math.degrees(angulo_radianes)
-
-        self.angle = angulo_radianes
     
     def obtain_new_point(self, third_point):
         # Calcular el ángulo de inclinación en radianes
