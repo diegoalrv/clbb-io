@@ -13,4 +13,4 @@ class SlotAdmin(admin.ModelAdmin):
 
 @admin.register(Coin)
 class CoinAdmin(admin.ModelAdmin):
-    list_display = ('name', 'number')
+    list_display = ('name', 'aruco_id')

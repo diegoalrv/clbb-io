@@ -19,7 +19,7 @@ img_path = "/Users/alonsodicandia/asesorias/clbb-io/camera/images/capture/imagen
 detector = Detector()
 slider = Slider()
 
-position = ['1','2','3','4']
+position = [str(i) for i in range(1,NUM_DIVISION+1)]
 
 while True:
     ret1, frame1 = cap1.read()
@@ -36,8 +36,6 @@ while True:
         
         coin = detector.check_coin(ids_copy)
         detector.just_slots_ids(ids_copy)
-
-        print(detector.slot_removed)
 
         if 0 in ids and START_COMPARING:
             p1, p2 = slider.slider_line
@@ -104,7 +102,8 @@ while True:
                     map_image = cv2.imdecode(np.frombuffer(image_data.read(), np.uint8), cv2.IMREAD_COLOR)
                     cv2.imshow('Map image', map_image)
         try:
-            url = f'http://localhost:8500/api/maps/?slider={position[index_min_distance]}&slot={data["number"]}'
+            url = f'http://localhost:8500/api/maps/?slider={position[index_min_distance]}&slots={",".join(map(str, detector.slots))}'
+            print(url)
             # Realiza la solicitud GET
             response = requests.get(url)
 

@@ -21,7 +21,7 @@ class Detector:
             return None
     
     def just_slots_ids(self, ids):
-        slots = list(filter(lambda x: x > 13, ids))
+        slots = list(filter(lambda x: x >= 13, ids))
 
         if self.slots and self.slots != slots:
             removed_slot = set(slots) ^ set(self.slots)
