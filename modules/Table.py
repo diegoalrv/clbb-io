@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from .myfunctions import *
 import itertools
+import json
 from modules import Base, Streets, GreenAreas, Amenities, LandUses, Blocks, SidewalkMaterial, Buildings, Bikeways
 
 class TableUserInferface(Base.BaseModule):
@@ -40,9 +41,31 @@ class TableUserInferface(Base.BaseModule):
         self.load_unit()
         self.update_nodes_ids()
 
-        self.numeric_kpis = {}
+        # Para guardar los heatmaps que se van creando o guardando
         self.heat_maps = {}
 
+        # Para guardar los kpis numericos (ciclovias y estado de las calles)
+        self.numeric_kpis = {}
+
+        # Para ir agregando los valores para el radar chart
+        self.radar_kpis = {}
+
+        # Para guardar los kpis del grafico de proximidades
+        self.proximity_kpis = {}
+
+        # Para guardar los valores de los usos de suelo para la torta.
+        self.land_uses_kpis = {}
+
+        # Para guardar los valores del gráfico de densidades
+        self.density_kpis = {}
+        pass
+
+    def load_heatmaps_from_folder(self, combination):
+        folder = os.path.join('/app/export', combination)
+        parquet_files = glob(os.path.join(folder, '*.parquet'))
+        for pfile in parquet_files:
+            name = os.path.split(pfile)[-1].replace('.parquet', '')
+            self.heat_maps[name] = gpd.read_parquet(pfile)
         pass
 
     def update_plate_status(self, plate_id, scenario_id):
@@ -161,7 +184,215 @@ class TableUserInferface(Base.BaseModule):
     def calc_bicycle_route_kpis(self):
         self.numeric_kpis['BicycleRouteMeters'] = self.bw.calculate_lineal_meters_by_neighborhoods()
         pass
+
+    def get_proximity_gdf(self):
+        proximity_gdf = []
+
+        proximity_cols = ['source', 'destination', 'path_lengths', 'Category', 'hex_id', 'geometry', 'travel_time']
+
+        listado_de_claves = list(self.heat_maps.keys())
+
+        claves_proximidad = [clave for clave in listado_de_claves if clave.endswith('_proximity') and 'parque' not in clave and 'plaza' not in clave]
+
+        for key in claves_proximidad:
+            gdf = self.heat_maps[key].drop_duplicates(subset=['hex_id'])
+            gdf = gdf[proximity_cols]
+            proximity_gdf.append(gdf)
+
+        claves_proximidad = [clave for clave in listado_de_claves if clave.endswith('_proximity') and (clave.startswith('plaza') or clave.startswith('parque'))]
+
+        for key in claves_proximidad:
+            gdf = self.heat_maps[key].drop_duplicates(subset=['hex_id'])
+            gdf['Category'] = gdf['class'].map({'PK': 'Parque', 'SQ': 'Plaza'})
+            gdf = gdf[proximity_cols]
+            proximity_gdf.append(gdf)
+
+        proximity_gdf = pd.concat(proximity_gdf)
+
+        delete_categories = ['Aprovisionamiento']
+
+        proximity_gdf['Category'] = proximity_gdf['Category'].str.replace('Cuidados', 'Salud')
+        proximity_gdf = proximity_gdf[~proximity_gdf['Category'].isin(delete_categories)]
+        return proximity_gdf
         
+    def calc_num_proximity_ranges(self):
+        ppl = self.heat_maps['population_density']
+        ppl = ppl[['hex_id', 'population']]
+        total_population = ppl['population'].sum()
+        proximity_gdf = self.get_proximity_gdf()
+
+        # Definimos los rangos
+        rangos = [0, 10, 20]
+        # Etiquetas para los rangos, ajusta según tus necesidades
+        etiquetas = ['Baja', 'Media', 'Alta']
+        # Creamos una nueva columna en el gdf para almacenar las etiquetas de los rangos
+        proximity_gdf['proximidad'] = pd.cut(proximity_gdf['travel_time'], bins=rangos + [float('inf')], labels=etiquetas, right=False)
+        proximity_and_ppl_gdf = pd.merge(proximity_gdf, ppl, on='hex_id', how='outer')
+        df = proximity_and_ppl_gdf.groupby(['Category', 'proximidad'])['population'].agg('sum').reset_index()
+        df['population'] = 100*df['population']/total_population
+        return df
+    
+    def num_proximity_to_json(self):
+        df = self.calc_proximity_ranges()
+        # Crear un diccionario en el formato deseado
+        output = {
+            "barrasHorizontalesStackeadas": {
+                "barras": []
+            }
+        }
+        # Iterar sobre las filas del DataFrame para crear la estructura deseada
+        for nombre, group in df.groupby("Category"):
+            valores = group["population"].tolist()
+            output["barrasHorizontalesStackeadas"]["barras"].append({"nombre": nombre, "valores": valores})
+        
+        self.proximity_kpis = output
+        # json_output = json.dumps(output, indent=2)
+        # return json_output
+        pass
+    
+    def calc_radar_proximity(self):
+        ppl = self.heat_maps['population_density']
+        ppl = ppl[['hex_id', 'population']]
+        total_population = ppl['population'].sum()
+        proximity_gdf = self.get_proximity_gdf()
+        proximity_and_ppl_gdf = pd.merge(proximity_gdf, ppl, on='hex_id', how='outer')
+        proximity_and_ppl_gdf['travel_time*people'] = proximity_and_ppl_gdf['travel_time']*proximity_and_ppl_gdf['population']
+        group_prox = proximity_and_ppl_gdf.groupby('Category')['travel_time*people'].agg('sum').reset_index()
+        group_prox.rename(columns={'travel_time*people': 'summ'}, inplace=True)
+        group_prox['summ'] = group_prox['summ']/total_population
+
+        def mapeo_inverso_tiempo_viaje(valor):
+            limit_time = 30
+
+            if valor >= limit_time:
+                return 0
+            else:
+                return 100 - (valor / limit_time) * 100
+        
+        group_prox['summ'] = group_prox['summ'].apply(mapeo_inverso_tiempo_viaje)
+        return group_prox
+    
+    def radar_proximity_to_json(self):
+        df = self.calc_radar_proximity()
+        # Obtener las categorías y valores del DataFrame
+        categorias = df["Category"].tolist()
+        valores = df["summ"].tolist()
+
+        # Crear un diccionario en el formato deseado
+        radar_data = {
+            "radar": {
+                "categorias": categorias,
+                "valoresSet1": valores
+            }
+        }
+
+        self.radar_kpis.update(radar_data)
+        # # Convertir a JSON y mostrarlo
+        # json_output = json.dumps(radar_data, indent=2)
+        # print(json_output)
+        pass
+    
+    def calc_num_land_uses(self):
+        lu = self.heat_maps['land_uses_diversity']
+        self.radar_kpis['Usos de Suelo'] = lu.loc[lu['diversity']>0, 'diversity'].mean()
+        pass
+    
+    def calc_dist_land_uses(self):
+        gdf = self.lu.get_current_land_uses().copy()
+
+        porcentaje_limit = 3
+
+        # Calcular la distribución de Uso según area_predio
+        uso_distribucion = gdf.groupby('Uso')['area_predio'].sum().reset_index()
+
+        # Cambiar el nombre de la columna 'area_predio' a 'total_area_predio'
+        uso_distribucion = uso_distribucion.rename(columns={'area_predio': 'total_area_predio'})
+
+        # Calcular el porcentaje de área en relación con el total
+        uso_distribucion['porcentaje_area'] = uso_distribucion['total_area_predio'] / uso_distribucion['total_area_predio'].sum() * 100
+
+        uso_distribucion.loc[uso_distribucion['porcentaje_area']<porcentaje_limit,'Uso'] = 'OTROS'
+        uso_distribucion = uso_distribucion.groupby(['Uso'])[['total_area_predio', 'porcentaje_area']].agg('sum').reset_index()
+
+        return uso_distribucion
+    
+    def num_land_uses_to_json(self):
+        uso_distribucion = self.calc_dist_land_uses()
+
+        # Encuentra la longitud máxima en la columna "Uso"
+        longitud_maxima = uso_distribucion['Uso'].str.len().max()
+
+        uso_distribucion['Uso'] = uso_distribucion['Uso'].str.capitalize()
+        uso_distribucion['Uso'] = uso_distribucion['Uso'].str.strip()
+        uso_distribucion['Uso'] = uso_distribucion['Uso'].str.ljust(longitud_maxima)
+
+        # Crear una lista de diccionarios en el formato deseado
+        tipos = []
+        for index, row in uso_distribucion.iterrows():
+            tipo = {
+                "nombre": row['Uso'],  # Elimina espacios en blanco al principio y al final
+                "valor": int(row['porcentaje_area'])  # Convierte el porcentaje a entero
+            }
+            tipos.append(tipo)
+
+        # Crear el diccionario JSON final
+        json_output = {
+            "graficoDeTorta": {
+                "tipos": tipos
+            }
+        }
+
+        self.land_uses_kpis.update(json_output)
+        # # Convertir a JSON y mostrarlo o guardar en un archivo
+        # print(json.dumps(json_output, indent=2))
+        pass
+
+    def calc_numeric_densities(self):
+        density_gdf = []
+        listado_de_claves = self.heat_maps.keys()
+        claves_densidad = [clave for clave in listado_de_claves if clave.endswith('_density')]
+        # print(claves_densidad)
+        cols = ['hex_id', 'Category', 'density', 'geometry']
+        for key in claves_densidad:
+            gdf = self.heat_maps[key].copy()
+            gdf['Category'] = key
+            if 'building' in key:
+                pass
+            elif 'population' in key:
+                gdf.drop(columns='density', inplace=True)
+                gdf.rename(columns={'population': 'density'}, inplace=True)
+            else:
+                gdf.drop(columns='density', inplace=True)
+                gdf.rename(columns={'amenities_count': 'density'}, inplace=True)
+            
+            gdf = gdf[cols]
+            density_gdf.append(gdf)
+        density_gdf = pd.concat(density_gdf)
+        density_gdf['Category'] = density_gdf['Category'].str.replace('cuidados', 'salud')
+        density_gdf['Category'] = density_gdf['Category'].str.replace('_density', '')
+        return density_gdf
+
+    def calc_radar_densities(self):
+        density_gdf = self.calc_numeric_densities()
+        density_gdf['area'] = density_gdf['geometry'].area
+        density_gdf = density_gdf[density_gdf['density'] > 0]
+        group_gdf = density_gdf.groupby(['Category'])[['density', 'area']].agg('sum').reset_index()
+        group_gdf['Category'] = group_gdf['Category'].str.replace('building', 'edificacion')
+        group_gdf['Category'] = group_gdf['Category'].str.replace('population', 'poblacion')
+        return group_gdf
+
+    def radar_densities_to_json(self):
+        df = self.calc_radar_densities()
+        radar_data = {
+            "radar": {
+                "categorias": df["Category"].tolist(),
+                "valoresSet1": df["density"].tolist(),
+            }
+        }
+        self.radar_kpis.update(radar_data)
+
+    def calc_bar_densities(self):
+        df = self.calc_numeric_densities()
     ######################################################################
     #### Funciones para calculo de densidades
     ######################################################################

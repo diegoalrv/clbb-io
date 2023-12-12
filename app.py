@@ -75,8 +75,3 @@ for index, row in combinaciones_placas_estados.iterrows():
             logging.error(f'Error en carpeta: {folder}, error: {str(e)}')
     else:
         logging.info(f'Carpeta: {folder} ya contiene archivos')
-
-# from glob import glob
-
-# files = glob('/app/export/*/*.parquet')
-# [gpd.read_parquet(parquet_file).to_file(parquet_file.replace('.parquet', ''))  for parquet_file in files];

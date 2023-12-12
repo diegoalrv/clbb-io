@@ -9,6 +9,7 @@ class BaseModule():
         self.default_crs = '32718'
         self.load_plates()
         self.load_area_scope()
+        self.load_neighborhoods()
         pass
 
     def load_plates(self):
@@ -41,4 +42,11 @@ class BaseModule():
     def load_area_scope(self):
         area_scope_path = '/app/assets/area_scope'
         self.area_scope = gpd.read_file(area_scope_path).to_crs(self.default_crs)
+        pass
+
+    def load_neighborhoods(self):
+        neighborhood_path = '/app/assets/neighborhoods'
+        extension = '.parquet'
+        neighborhood_files = glob.glob(os.path.join(neighborhood_path, f'*{extension}'))
+        self.neighborhoods = {os.path.split(parquet_file)[-1].replace(extension, ''): gpd.read_parquet(parquet_file).to_crs(self.default_crs) for parquet_file in neighborhood_files}
         pass
