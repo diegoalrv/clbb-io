@@ -60,6 +60,26 @@ class TableUserInferface(Base.BaseModule):
         self.density_kpis = {}
         pass
 
+    def reset_json_data(self):
+        # Para guardar los heatmaps que se van creando o guardando
+        self.heat_maps = {}
+
+        # Para guardar los kpis numericos (ciclovias y estado de las calles)
+        self.numeric_kpis = {}
+
+        # Para ir agregando los valores para el radar chart
+        self.radar_kpis = {}
+
+        # Para guardar los kpis del grafico de proximidades
+        self.proximity_kpis = {}
+
+        # Para guardar los valores de los usos de suelo para la torta.
+        self.land_uses_kpis = {}
+
+        # Para guardar los valores del gráfico de densidades
+        self.density_kpis = {}
+        pass
+
     def load_heatmaps_from_folder(self, combination):
         folder = os.path.join('/app/export', combination)
         parquet_files = glob(os.path.join(folder, '*.parquet'))
@@ -115,7 +135,14 @@ class TableUserInferface(Base.BaseModule):
         if 'Blocks' in self.modules_available: pass
         if 'Buildings' in self.modules_available: pass
         if 'Bikeways' in self.modules_available: pass
-        pass 
+        pass
+
+    def generate_export_json(self):
+        json_export = {}
+        json_export.update(self.radar_kpis)
+        json_export.update(self.proximity_kpis)
+        json_export.update(self.land_uses_kpis)
+        json_export.update(self.density_kpis) 
 
     ######################################################################    
     #### Funciones de unidades espaciales
@@ -182,7 +209,7 @@ class TableUserInferface(Base.BaseModule):
         pass
 
     def calc_bicycle_route_kpis(self):
-        self.numeric_kpis['BicycleRouteMeters'] = self.bw.calculate_lineal_meters_by_neighborhoods()
+        self.numeric_kpis['BicycleRouteMeters'] = self.bw.calc_linear_meters()
         pass
 
     def get_proximity_gdf(self):
@@ -233,7 +260,7 @@ class TableUserInferface(Base.BaseModule):
         return df
     
     def num_proximity_to_json(self):
-        df = self.calc_proximity_ranges()
+        df = self.calc_num_proximity_ranges()
         # Crear un diccionario en el formato deseado
         output = {
             "barrasHorizontalesStackeadas": {
@@ -245,7 +272,7 @@ class TableUserInferface(Base.BaseModule):
             valores = group["population"].tolist()
             output["barrasHorizontalesStackeadas"]["barras"].append({"nombre": nombre, "valores": valores})
         
-        self.proximity_kpis = output
+        self.proximity_kpis.update(output)
         # json_output = json.dumps(output, indent=2)
         # return json_output
         pass
@@ -253,6 +280,7 @@ class TableUserInferface(Base.BaseModule):
     def calc_radar_proximity(self):
         ppl = self.heat_maps['population_density']
         ppl = ppl[['hex_id', 'population']]
+
         total_population = ppl['population'].sum()
         proximity_gdf = self.get_proximity_gdf()
         proximity_and_ppl_gdf = pd.merge(proximity_gdf, ppl, on='hex_id', how='outer')
@@ -292,9 +320,17 @@ class TableUserInferface(Base.BaseModule):
         # print(json_output)
         pass
     
-    def calc_num_land_uses(self):
+    def radar_num_land_uses(self):
         lu = self.heat_maps['land_uses_diversity']
-        self.radar_kpis['Usos de Suelo'] = lu.loc[lu['diversity']>0, 'diversity'].mean()
+        self.radar_kpis['Usos de Suelo'] = 100*lu.loc[lu['diversity']>0, 'diversity'].mean()
+        valor_usos_de_suelo = self.radar_kpis['Usos de Suelo']
+
+        # Elimina 'Usos de Suelo' del diccionario original
+        del self.radar_kpis['Usos de Suelo']
+
+        # Añade 'Usos de Suelo' a 'categorias' y su valor correspondiente a 'valoresSet1'
+        self.radar_kpis['radar']['categorias'].append('Usos de Suelo')
+        self.radar_kpis['radar']['valoresSet1'].append(valor_usos_de_suelo)
         pass
     
     def calc_dist_land_uses(self):
@@ -383,16 +419,72 @@ class TableUserInferface(Base.BaseModule):
 
     def radar_densities_to_json(self):
         df = self.calc_radar_densities()
+        df['Category'] = df['Category'].str.capitalize()
+        df['Category'] = df['Category'].apply(lambda x: x + '_d')
         radar_data = {
             "radar": {
                 "categorias": df["Category"].tolist(),
                 "valoresSet1": df["density"].tolist(),
             }
         }
-        self.radar_kpis.update(radar_data)
+        self.radar_kpis = {
+            'radar': {
+                'categorias': self.radar_kpis['radar']['categorias'] + radar_data['radar']['categorias'],
+                'valoresSet1': self.radar_kpis['radar']['valoresSet1'] + radar_data['radar']['valoresSet1']
+            }
+        }
 
     def calc_bar_densities(self):
         df = self.calc_numeric_densities()
+        neighborhoods = pd.concat(self.neighborhoods.values())
+
+        df = gpd.sjoin(df, neighborhoods)
+        df.rename(columns={'Nombre': 'barrio'}, inplace=True)
+        dens_cols = ['hex_id', 'Category', 'density', 'barrio', 'geometry']
+        df = df[dens_cols]
+        df['area'] = df['geometry'].area
+
+        vals_to_replace = ['salud', 'cultura', 'educacion']
+        for val in vals_to_replace:
+            df['Category'] = df['Category'].str.replace(val, 'amenities')
+
+        group_df = df.groupby(['Category', 'barrio'])[['density', 'area']].agg('sum').reset_index()
+        group_df.rename(columns={'density': 'count'}, inplace=True)
+        group_df = group_df[['Category','barrio','count']]
+        # Función para capitalizar palabras con más de 2 caracteres
+        def capitalizar_palabras(texto):
+            palabras = texto.split()
+            palabras_capitalizadas = [palabra.capitalize() if len(palabra) > 2 else palabra.lower() for palabra in palabras]
+            return " ".join(palabras_capitalizadas)
+
+        # Aplicar la función a la columna "barrio"
+        group_df["barrio"] = group_df["barrio"].apply(capitalizar_palabras)
+        return group_df
+    
+    def bar_densities_to_json(self):
+        df = self.calc_bar_densities()
+        # Obtener la lista de categorías únicas
+        categorias = df["Category"].unique()
+
+        # Crear un diccionario para almacenar los datos
+        resultados = {}
+
+        for categoria in categorias:
+            df_categoria = df[df["Category"] == categoria]
+            barras = []
+
+            for index, row in df_categoria.iterrows():
+                nombre = row["barrio"]
+                valores = df[df["barrio"] == nombre]["count"].tolist()
+               
+                barra = {"nombre": nombre, "valores": valores}
+                barras.append(barra)
+
+            resultados[categoria] = {"barras": barras}
+        
+        self.density_kpis.update({'barrasStackeadas': resultados['amenities']})
+        pass
+
     ######################################################################
     #### Funciones para calculo de densidades
     ######################################################################

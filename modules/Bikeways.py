@@ -25,6 +25,18 @@ class Bikeways(BaseModule):
         self.current_scenario = self.scenarios[scenario_id]
         pass
 
+    def calc_max_linear_meters(self):
+        bikes = self.scenarios[2].copy()
+        gdf = self.area_scope.copy()
+        intersection = gpd.overlay(bikes, gdf, how='intersection')
+        return intersection['length'].sum()
+
+    def calc_linear_meters(self):
+        bikes = self.current_scenario.copy()
+        gdf = self.area_scope.copy()
+        intersection = gpd.overlay(bikes, gdf, how='intersection')
+        return intersection['length'].sum()/self.calc_max_linear_meters()
+
     def calculate_lineal_meters_by_neighborhoods(self):
         gdf = gpd.read_file('/app/assets/neighborhoods/all').to_crs(32718)
         bikes = self.current_scenario.copy()
