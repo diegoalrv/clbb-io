@@ -96,15 +96,14 @@ while True:
                 data = response.json()
                 data = data[0]
                 image_url = data["image"]
-                response = requests.get(image_url)
-                if response.status_code == 200:
-                    image_data = BytesIO(response.content)
-                    map_image = cv2.imdecode(np.frombuffer(image_data.read(), np.uint8), cv2.IMREAD_COLOR)
-                    cv2.imshow('Map image', map_image)
+                # print(image_url)
+
         try:
+            if len(detector.slots) < 7:
+                continue
             url = f'http://localhost:8500/api/maps/?slider={position[index_min_distance]}&slots={",".join(map(str, detector.slots))}'
-            print(url)
             # Realiza la solicitud GET
+            print(url)
             response = requests.get(url)
 
             # Verifica si la solicitud fue exitosa (código de estado 200)
@@ -113,11 +112,9 @@ while True:
                 data = response.json()
                 data = data[0]
                 image_url = data["image"]
-                response = requests.get(image_url)
-                if response.status_code == 200:
-                    image_data = BytesIO(response.content)
-                    map_image = cv2.imdecode(np.frombuffer(image_data.read(), np.uint8), cv2.IMREAD_COLOR)
-                    cv2.imshow('Map image', map_image)
+                # print(image_url)
+                body = {"new_image_url": image_url}
+                post = requests.post('http://192.168.31.120:9001/update_image', json=body)
         except:
             print("No hay endpoint")
     # Rompe el bucle si se presiona la tecla 'q'

@@ -16,9 +16,9 @@ def draw_horizontal_lines(frame, cord1, cord2, slider, start_comparing = False):
     if not start_comparing:
         slider.slider_line = cord_1, cord_2
 
-    x_1 = cord_1[0]
+    x_1 = cord_1[0] + 40
     y_1 = cord_1[1]
-    x_2 = cord_2[0]
+    x_2 = cord_2[0] - 40
     y_2 = cord_2[1]
     
     # Dibujar la línea
