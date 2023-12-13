@@ -18,11 +18,18 @@ application = get_wsgi_application()
 # Importa el modelo Map
 from backend.models.maps import Map
 from backend.models.slots import Slot
+from backend.models.coins import Coin
 
 slider = {
      'diversidad_suelo': 1,
+     'proximidad_cultura': 3,
+     'poblacion': 4,
      'parques': 6,
      'plazas': 7
+}
+
+coins = {
+     'proximidad_cultura': 10
 }
 
 Map.objects.all().delete()
@@ -56,10 +63,11 @@ for carpeta in subcarpetas:
              print(f'Problemas con {archivo}')
              continue
 
+        coin = Coin.objects.get(aruco_id=coins[nombre_mapa]) if nombre_mapa in coins.keys() else None
         mapa = Map(
             name=f"{nombre_mapa}_{map_number}",
             slider=slider[nombre_mapa],
-            coin=None,
+            coin=coin if coin is not None else None,
             image=None,
             slot1=Slot.objects.get(position_on_map=1, aruco_id=13 + int(map_number[0]) * 7),  # Ajusta según tus necesidades
             slot2=Slot.objects.get(position_on_map=2, aruco_id=14 + int(map_number[1]) * 7),

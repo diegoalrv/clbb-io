@@ -3,6 +3,16 @@ from django.db.models import Q
 from backend.models.maps import Map
 from backend.serializers.map import MapSerializer
 
+IDS = {
+    '13': 0,
+    '14': 1,
+    '15': 2,
+    '16': 3,
+    '17': 4,
+    '18': 5,
+    '19': 6
+}
+
 class MapViewSet(viewsets.ModelViewSet):
     queryset = Map.objects.all()
     serializer_class = MapSerializer
@@ -18,7 +28,13 @@ class MapViewSet(viewsets.ModelViewSet):
 
         # Filtra por slider si el parámetro está presente
         if slider_param is not None and slots_param is not None:
-            slots_param = slots_param.split(',')
+            slots_param = sorted(slots_param.split(','))
+            for num in slots_param:
+                if int(num) >= 20:
+                    slots_param.remove(num)
+                    slots_param.insert(IDS[str(int(num)-7)], num)
+                    print(num, IDS[str(int(num)-7)])
+            print(slots_param)
             queryset = queryset.filter(
                 Q(slider=slider_param) &   
                 Q(slot1__aruco_id=slots_param[0]) &

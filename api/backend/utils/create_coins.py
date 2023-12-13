@@ -23,7 +23,10 @@ areas = {
     'CALIDAD ACERAS': 7,
     'MODELO AGENTES': 8,
     'PUENTE': 9,
+    'PROXIMIDAD CULTURA': 10
 }
+
+Coin.objects.all().delete()
 
 # Función para inicializar objetos Coin
 def init_coins():

@@ -6,6 +6,7 @@ from backend.models.coins import Coin
 @admin.register(Map)
 class MapAdmin(admin.ModelAdmin):
     list_display = ('name', 'slider', 'slug')
+    search_fields = ['name'] 
 
 @admin.register(Slot)
 class SlotAdmin(admin.ModelAdmin):
