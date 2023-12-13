@@ -1,5 +1,6 @@
 import cv2
 import requests
+import time
 import numpy as np
 from capture_aruco import detectar_aruco
 from slider import Slider
@@ -10,6 +11,7 @@ from utils import calculate_center, draw_horizontal_lines
 
 START_COMPARING = False
 NUM_DIVISION = 8
+OLD_COMBINATION = None
 
 # Abre la cámara (usualmente la cámara predeterminada, 0)
 cap1 = cv2.VideoCapture(0)
@@ -19,6 +21,7 @@ img_path = "/Users/alonsodicandia/asesorias/clbb-io/camera/images/capture/imagen
 detector = Detector()
 slider = Slider()
 
+index_min_distance = None
 position = [str(i) for i in range(1,NUM_DIVISION+1)]
 
 while True:
@@ -83,25 +86,15 @@ while True:
 
     
     # Finally
-    if START_COMPARING:
+    if START_COMPARING and index_min_distance is not None:
         response = None
-        coin = None
+        if len(detector.slots) < 7:
+            continue
         if coin is not None:
-            url = f'http://localhost:8500/api/maps/?coin={coin}'
-            print(url)
-            response = requests.get(url)
-            # Verifica si la solicitud fue exitosa (código de estado 200)
-            if response.status_code == 200:
-                # Imprime el contenido de la respuesta
-                data = response.json()
-                data = data[0]
-                image_url = data["image"]
-                # print(image_url)
-
-        try:
-            if len(detector.slots) < 7:
-                continue
+            url = f'http://localhost:8500/api/maps/?slider={position[index_min_distance]}&slots={",".join(map(str, detector.slots))}&coin={coin}'
+        else:
             url = f'http://localhost:8500/api/maps/?slider={position[index_min_distance]}&slots={",".join(map(str, detector.slots))}'
+        try:
             # Realiza la solicitud GET
             print(url)
             response = requests.get(url)
@@ -110,13 +103,25 @@ while True:
             if response.status_code == 200:
                 # Imprime el contenido de la respuesta
                 data = response.json()
-                data = data[0]
+                try:
+                    data = data[0]
+                except:
+                    continue
+                slot_combination = data["name"][-7:]
+                if OLD_COMBINATION != slot_combination:
+                    data_json = requests.get(f'http://192.168.31.120:8500/media/json/{slot_combination}.json')
+                    json_data = data_json.json()
+                    print(json_data)
+                    post_json = requests.post('http://192.168.31.120:8900/receive_data', json=json_data)
+
+                    OLD_COMBINATION = slot_combination
+
                 image_url = data["image"]
-                # print(image_url)
                 body = {"new_image_url": image_url}
-                post = requests.post('http://192.168.31.120:9001/update_image', json=body)
-        except:
-            print("No hay endpoint")
+                post_image = requests.post('http://192.168.31.120:9001/update_image', json=body)
+
+        except Exception as e:
+            print(e)
     # Rompe el bucle si se presiona la tecla 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         cv2.imwrite(img_path, frame)

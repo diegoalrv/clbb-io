@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from django.db.models import Q
 from backend.models.maps import Map
+from backend.models.coins import Coin
 from backend.serializers.map import MapSerializer
-import requests
 
 IDS = {
     '13': 0,
@@ -27,6 +27,9 @@ class MapViewSet(viewsets.ModelViewSet):
 
         coin_param = self.request.query_params.get('coin', None)
 
+        if coin_param is not None:
+            coin = Coin.objects.get(aruco_id=coin_param)
+
         # Filtra por slider si el parámetro está presente
         if slider_param is not None and slots_param is not None:
             slots_param = sorted(slots_param.split(','))
@@ -34,10 +37,9 @@ class MapViewSet(viewsets.ModelViewSet):
                 if int(num) >= 20:
                     slots_param.remove(num)
                     slots_param.insert(IDS[str(int(num)-7)], num)
-                    print(num, IDS[str(int(num)-7)])
-            print(slots_param)
             queryset = queryset.filter(
                 Q(slider=slider_param) &   
+                Q(coin = coin if coin_param is not None else None) &
                 Q(slot1__aruco_id=slots_param[0]) &
                 Q(slot2__aruco_id=slots_param[1]) &
                 Q(slot3__aruco_id=slots_param[2]) &
@@ -58,12 +60,6 @@ from backend.serializers.map import TestImageSerializer
 class TestImageViewSet(viewsets.ModelViewSet):
     queryset = TestImage.objects.all()
     serializer_class = TestImageSerializer
-
-    def save(self, *args, **kwargs):
-        # Llama al método save de la clase base para realizar la lógica de guardado estándar
-        super().save(*args, **kwargs)
-        body = {"new_image_url": self.image}
-        post = requests.post('http://localhost:9001/update_image', json=body)
 
 
 

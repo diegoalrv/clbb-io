@@ -16,7 +16,7 @@ class Detector:
         intersection = self.coin_ids & ids
 
         if len(intersection) > 0:
-            return intersection
+            return list(intersection)[0]
         else:
             return None
     

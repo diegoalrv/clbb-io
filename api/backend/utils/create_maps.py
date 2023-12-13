@@ -23,13 +23,15 @@ from backend.models.coins import Coin
 slider = {
      'diversidad_suelo': 1,
      'proximidad_cultura': 3,
+     'educacion': 3,
      'poblacion': 4,
      'parques': 6,
      'plazas': 7
 }
 
 coins = {
-     'proximidad_cultura': 10
+     'proximidad_cultura': 10,
+     'educacion': 11
 }
 
 Map.objects.all().delete()
