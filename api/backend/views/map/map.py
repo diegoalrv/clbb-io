@@ -50,3 +50,11 @@ class MapViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(coin__number=coin_param)
 
         return queryset
+    
+from backend.models.maps import TestImage
+from backend.serializers.map import TestImageSerializer
+
+class TestImageViewSet(viewsets.ModelViewSet):
+    queryset = TestImage.objects.all()
+    serializer_class = TestImageSerializer
+

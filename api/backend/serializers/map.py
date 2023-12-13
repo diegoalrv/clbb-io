@@ -14,3 +14,10 @@ class MapSerializer(serializers.ModelSerializer):
     class Meta:
         model = Map
         fields = '__all__'
+
+from backend.models.maps import TestImage
+
+class TestImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TestImage
+        fields = ('image',)
