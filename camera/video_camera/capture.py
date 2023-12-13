@@ -91,8 +91,12 @@ while True:
         if len(detector.slots) < 7:
             continue
         if coin is not None:
-            url = f'http://localhost:8500/api/maps/?slider={position[index_min_distance]}&slots={",".join(map(str, detector.slots))}&coin={coin}'
+            if coin >= 3 and coin < 10:
+                url = f'http://localhost:8500/api/maps/?coin={coin}'
+            else:
+                url = f'http://localhost:8500/api/maps/?slider={position[index_min_distance]}&slots={",".join(map(str, detector.slots))}&coin={coin}'
         else:
+            coin = 0
             url = f'http://localhost:8500/api/maps/?slider={position[index_min_distance]}&slots={",".join(map(str, detector.slots))}'
         try:
             # Realiza la solicitud GET
@@ -107,14 +111,15 @@ while True:
                     data = data[0]
                 except:
                     continue
-                slot_combination = data["name"][-7:]
-                if OLD_COMBINATION != slot_combination:
-                    data_json = requests.get(f'http://192.168.31.120:8500/media/json/{slot_combination}.json')
-                    json_data = data_json.json()
-                    print(json_data)
-                    post_json = requests.post('http://192.168.31.120:8900/receive_data', json=json_data)
+                if coin > 9:
+                    slot_combination = data["name"][-7:]
+                    if OLD_COMBINATION != slot_combination:
+                        data_json = requests.get(f'http://192.168.31.120:8500/media/json/{slot_combination}.json')
+                        json_data = data_json.json()
+                        print(json_data)
+                        post_json = requests.post('http://192.168.31.120:8900/receive_data', json=json_data)
 
-                    OLD_COMBINATION = slot_combination
+                        OLD_COMBINATION = slot_combination
 
                 image_url = data["image"]
                 body = {"new_image_url": image_url}

@@ -50,7 +50,7 @@ class MapViewSet(viewsets.ModelViewSet):
             )
 
         elif coin_param is not None:
-            queryset = queryset.filter(coin__number=coin_param)
+            queryset = queryset.filter(coin=coin)
 
         return queryset
     
