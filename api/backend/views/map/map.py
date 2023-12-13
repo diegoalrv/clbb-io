@@ -2,6 +2,7 @@ from rest_framework import viewsets
 from django.db.models import Q
 from backend.models.maps import Map
 from backend.serializers.map import MapSerializer
+import requests
 
 IDS = {
     '13': 0,
@@ -57,4 +58,12 @@ from backend.serializers.map import TestImageSerializer
 class TestImageViewSet(viewsets.ModelViewSet):
     queryset = TestImage.objects.all()
     serializer_class = TestImageSerializer
+
+    def save(self, *args, **kwargs):
+        # Llama al método save de la clase base para realizar la lógica de guardado estándar
+        super().save(*args, **kwargs)
+        body = {"new_image_url": self.image}
+        post = requests.post('http://localhost:9001/update_image', json=body)
+
+
 
