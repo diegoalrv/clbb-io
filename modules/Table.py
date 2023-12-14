@@ -251,7 +251,7 @@ class TableUserInferface(Base.BaseModule):
         # Definimos los rangos
         rangos = [0, 10, 20]
         # Etiquetas para los rangos, ajusta según tus necesidades
-        etiquetas = ['Baja', 'Media', 'Alta']
+        etiquetas = ['Alta', 'Media', 'Baja']
         # Creamos una nueva columna en el gdf para almacenar las etiquetas de los rangos
         proximity_gdf['proximidad'] = pd.cut(proximity_gdf['travel_time'], bins=rangos + [float('inf')], labels=etiquetas, right=False)
         proximity_and_ppl_gdf = pd.merge(proximity_gdf, ppl, on='hex_id', how='outer')
@@ -770,3 +770,42 @@ class TableUserInferface(Base.BaseModule):
             main = os.path.split(path)[-1]
             output_zip_path = f'/app/data/output/zip/{main}.zip'
             zip_folder(path, output_zip_path)
+    
+    def generate_json_data(self):
+
+        self.calc_sidewalk_kpis() # Listo
+        self.calc_bicycle_route_kpis() # Listo
+
+        self.num_land_uses_to_json() # Listo
+        self.radar_proximity_to_json() # Listo
+        self.radar_num_land_uses() # Listo
+        self.radar_densities_to_json() # Listo
+        self.bar_densities_to_json() # Listo
+        self.num_proximity_to_json() # Listo
+
+        json_export = {}
+        json_export.update(self.radar_kpis)
+        json_export.update(self.proximity_kpis)
+        json_export.update(self.land_uses_kpis)
+        json_export.update(self.density_kpis)
+        radar_list = json_export['radar']['valoresSet1']
+        json_export['radar']['valoresSet2'] = [75]*len(radar_list)
+        normalizer_multiply_radar = [1, 1, 1, 1, 1, 1, 1, 1, 0.01, 7.5, 1, 0.002, 5]
+        radar_list_norm = [value*norm for value, norm in zip(radar_list, normalizer_multiply_radar)]
+        json_export['radar']['valoresSet1'] = radar_list_norm
+
+        normalizer_multiply_stackedbar = [ 100, 1/5, 1/20,]
+        l = json_export['barrasStackeadas']['barras']
+        for index, dt in enumerate(l):
+            for k, v in dt.items():
+                if(k=='valores'):
+                    json_export['barrasStackeadas']['barras'][index]['valores'] = [value*norm for value, norm in zip(v, normalizer_multiply_stackedbar)]
+        self.json_data = json_export
+        pass
+
+    def export_json_data(self, combination):
+        filename = os.path.join(f'/app/export/json/{combination}.json')
+        with open(filename, "w") as archivo:
+            json.dump(self.json_data, archivo, indent=4)
+        self.reset_json_data()
+
