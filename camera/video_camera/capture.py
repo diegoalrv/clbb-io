@@ -109,21 +109,23 @@ while True:
                 data = response.json()
                 try:
                     data = data[0]
-                except:
-                    continue
-                if coin > 9:
                     slot_combination = data["name"][-7:]
                     if OLD_COMBINATION != slot_combination:
                         data_json = requests.get(f'http://192.168.31.120:8500/media/json/{slot_combination}.json')
                         json_data = data_json.json()
-                        print(json_data)
+                        # print(json_data)
                         post_json = requests.post('http://192.168.31.120:8900/receive_data', json=json_data)
 
                         OLD_COMBINATION = slot_combination
+                except:
+                    continue
+                # if coin > 9:
 
                 image_url = data["image"]
+                # print(image_url)
                 body = {"new_image_url": image_url}
                 post_image = requests.post('http://192.168.31.120:9001/update_image', json=body)
+                # print(post_image.status_code)
 
         except Exception as e:
             print(e)
