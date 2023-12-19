@@ -2,15 +2,17 @@
 install.packages("sf")
 install.packages("ggplot2")
 install.packages("cowplot")
+install.packages("viridisLite")
 library(sf)
 library(ggplot2)
 library(cowplot)
 library(magick)
+library(viridisLite)
 
 
 # Ruta a la carpeta que contiene los archivos Shapefile
-ruta_carpeta <- "C:/Users/helen/OneDrive/Documentos/Citylab/Indicadores/proximidad/actual/consolidado"
-salida <- "C:/Users/helen/OneDrive/Documentos/Citylab/Indicadores/proximidad/actual/consolidado/mapa/"
+ruta_carpeta <- "C:/Users/helen/OneDrive/Documentos/Citylab/Indicadores/proximidad/input/actual/consolidado/"
+salida <- "C:/Users/helen/OneDrive/Documentos/Citylab/Indicadores/proximidad/output/"
 mascara_shapefile <- "C:/Users/helen/OneDrive/Documentos/Citylab/Indicadores/proximidad/area_rio_quitar2.shp"
 
 
@@ -66,3 +68,9 @@ for (archivo_shapefile in archivos_shapefiles) {
   
   cat(paste("Archivo exportado como:", nombre_png, "\n"))
 }
+
+
+
+
+
+

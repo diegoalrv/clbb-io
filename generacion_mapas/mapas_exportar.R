@@ -31,16 +31,3 @@ for (archivo_shapefile in archivos_shapefiles) {
   cat(paste("Archivo exportado como:", nombre_png, "\n"))
 }
 
-# Mensaje de finalización
-#cat("Proceso de exportación finalizado.\n")
-#Con estos cambios, el código debería exportar cada Shapefile como un archivo PNG en la carpeta de salida que has especificado. Asegúrate de tener instaladas y cargadas las bibliotecas "sf" y "ggplot2" antes de ejecutar este código.
-
-
-
-
-
-
-}
-
-# Mensaje de finalización
-#cat("Proceso de exportación finalizado.\n")
