@@ -463,26 +463,50 @@ class TableUserInferface(Base.BaseModule):
     
     def bar_densities_to_json(self):
         df = self.calc_bar_densities()
-        # Obtener la lista de categorías únicas
-        categorias = df["Category"].unique()
+        df['Category'] = df['Category'].str.replace('building', 'edificaciones')
+        df['Category'] = df['Category'].str.replace('population', 'poblacion')
+        df['Category'] = df['Category'].str.capitalize()
 
-        # Crear un diccionario para almacenar los datos
-        resultados = {}
+        # Reorganizar el DataFrame para tener las categorías como columnas
+        df_pivot = df.pivot(index='barrio', columns='Category', values='count').reset_index()
+        df_pivot.columns.name = None
 
-        for categoria in categorias:
-            df_categoria = df[df["Category"] == categoria]
-            barras = []
+        # Crear la estructura del JSON
+        json_data = {
+            "barrasStackeadas": {
+                "xLabels": df_pivot.columns[1:].tolist(),
+                "barras": []
+            }
+        }
 
-            for index, row in df_categoria.iterrows():
-                nombre = row["barrio"]
-                valores = df[df["barrio"] == nombre]["count"].tolist()
+        # Iterar a través de las filas del DataFrame para construir la lista de barras
+        for index, row in df_pivot.iterrows():
+            barra = {
+                "nombre": row['barrio'],
+                "valores": row[1:].tolist()
+            }
+            json_data["barrasStackeadas"]["barras"].append(barra)
+
+        # # Obtener la lista de categorías únicas
+        # categorias = df["Category"].unique()
+        # print(df)
+        # # Crear un diccionario para almacenar los datos
+        # resultados = {}
+
+        # for categoria in categorias:
+        #     df_categoria = df[df["Category"] == categoria]
+        #     barras = []
+
+        #     for index, row in df_categoria.iterrows():
+        #         nombre = row["barrio"]
+        #         valores = df[df["barrio"] == nombre]["count"].tolist()
                
-                barra = {"nombre": nombre, "valores": valores}
-                barras.append(barra)
+        #         barra = {"nombre": nombre, "valores": valores}
+        #         barras.append(barra)
 
-            resultados[categoria] = {"barras": barras}
-        
-        self.density_kpis.update({'barrasStackeadas': resultados['amenities']})
+        #     resultados[categoria] = {"barras": barras}
+        # print(resultados)
+        self.density_kpis.update(json_data)
         pass
 
     ######################################################################
@@ -794,7 +818,7 @@ class TableUserInferface(Base.BaseModule):
         radar_list_norm = [value*norm for value, norm in zip(radar_list, normalizer_multiply_radar)]
         json_export['radar']['valoresSet1'] = radar_list_norm
 
-        normalizer_multiply_stackedbar = [ 100, 1/5, 1/20,]
+        normalizer_multiply_stackedbar = [ 50, 1/5, 1/20,]
         l = json_export['barrasStackeadas']['barras']
         for index, dt in enumerate(l):
             for k, v in dt.items():
