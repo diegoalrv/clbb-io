@@ -29,6 +29,5 @@ class Map(models.Model):
     def __str__(self):
         return f"Map {self.name}"
     
-
 class TestImage(models.Model):
     image = models.ImageField(upload_to='test/')

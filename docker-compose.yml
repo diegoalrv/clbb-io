@@ -18,5 +18,5 @@ services:
     environment:
       POSTGRES_DB: clbb
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 486s4s89d65a600f2df9862s41f26
+      POSTGRES_PASSWORD: qwerty1234
 
