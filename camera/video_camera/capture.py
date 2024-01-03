@@ -16,7 +16,7 @@ def main():
     cap2 = cv2.VideoCapture(2)
     img_path = "./images/capture/imagen.jpg"
 
-    local_url = 'http://localhost:8500/api/maps'
+    local_url = 'http://localhost:8500'
     # server_url = 'http://192.168.31.120'
     server_url = 'http://localhost'
     api_port = '8500'
@@ -41,41 +41,37 @@ def main():
                 continue
             else:
                 str_slots = ",".join(map(str, detector.slots))
-                url = f'{local_url}:{api_port}/?slots={str_slots}'
+                url = f'{local_url}:{api_port}/api/maps/?slots={str_slots}'
             try:
                 # Realiza la solicitud GET
                 print(url)
                 response = requests.get(url)
 
-                # Verifica si la solicitud fue exitosa (código de estado 200)
-                if response.status_code == 200:
-                    # Imprime el contenido de la respuesta
-                    data = response.json()
-                    try:
-                        data = data[0]
-                        slot_combination = data["name"][-7:]
-                        if OLD_COMBINATION != slot_combination:
-                            data_json = requests.get(f'{server_url}:{api_port}/media/json/{slot_combination}.json')
-                            json_data = data_json.json()
-                            # print(json_data)
-                            post_json = requests.post(f'{server_url}:{dash_port}/receive_data', json=json_data)
+                # # Verifica si la solicitud fue exitosa (código de estado 200)
+                # if response.status_code == 200:
+                #     # Imprime el contenido de la respuesta
+                #     data = response.json()
+                #     try:
+                #         data = data[0]
+                #         slot_combination = data["name"][-7:]
+                #         if OLD_COMBINATION != slot_combination:
+                #             data_json = requests.get(f'{server_url}:{api_port}/media/json/{slot_combination}.json')
+                #             json_data = data_json.json()
+                #             # print(json_data)
+                #             post_json = requests.post(f'{server_url}:{dash_port}/receive_data', json=json_data)
 
-                            OLD_COMBINATION = slot_combination
-                    except:
-                        continue
+                #             OLD_COMBINATION = slot_combination
+                #     except:
+                #         continue
 
-                    image_url = data["image"]
-                    # print(image_url)
-                    body = {"new_image_url": image_url}
-                    post_image = requests.post(f'{server_url}:{img_port}/update_image', json=body)
-                    # print(post_image.status_code)
+                #     image_url = data["image"]
+                #     # print(image_url)
+                #     body = {"new_image_url": image_url}
+                #     post_image = requests.post(f'{server_url}:{img_port}/update_image', json=body)
+                #     # print(post_image.status_code)
 
             except Exception as e:
                 print(e)
-        # Rompe el bucle si se presiona la tecla 'q'
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            cv2.imwrite(img_path, frame)
-            break
 
     # Libera la cámara y cierra la ventana
     cap1.release()

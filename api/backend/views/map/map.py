@@ -70,34 +70,7 @@ class MapViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(coin=coin)
 
         return queryset
-
-class MapTypeViewSet(viewsets.ModelViewSet):
-    queryset = Map.objects.all()
-    serializer_class = MapSerializer
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-
-        map_param = self.request.query_params.get('map-type', None)
-
-        if slots_param is not None:
-            slots_param = sorted(slots_param.split(','))
-            for num in slots_param:
-                if int(num) >= 20:
-                    slots_param.remove(num)
-                    slots_param.insert(IDS[str(int(num)-7)], num)
-            queryset = queryset.filter(
-                Q(slot1__aruco_id=slots_param[0]) &
-                Q(slot2__aruco_id=slots_param[1]) &
-                Q(slot3__aruco_id=slots_param[2]) &
-                Q(slot4__aruco_id=slots_param[3]) &
-                Q(slot5__aruco_id=slots_param[4]) &
-                Q(slot6__aruco_id=slots_param[5]) &
-                Q(slot7__aruco_id=slots_param[6])
-            )
-
-        return queryset
-    
+   
 from backend.models.maps import TestImage
 from backend.serializers.map import TestImageSerializer
 
