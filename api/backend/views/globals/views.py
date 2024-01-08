@@ -8,11 +8,14 @@ from django.db.models import Q
 
 @csrf_exempt
 def set_map_type(request):
+    print(request.body)
     if request.method == 'POST':        
         data = json.loads(request.body)
+        print(data)
         globals.map_type = data.get('map_type')
         return check_and_send_map()
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
 
 @csrf_exempt
 def set_map_state(request):
@@ -66,8 +69,12 @@ def check_and_send_map():
 def send_map_url_to_service(map_url):
     # Implementa la lógica para enviar la URL a otro servicio
     print(map_url.name)
-    return JsonResponse({'message': map_url.name})
-    # response = requests.post('http://other-service.com/api', data={'map_url': map_url})
+    #return JsonResponse({'message': map_url.name})
+    # base_url = 'http://localhost:5000'
+    base_url = 'http://bug-free-train-backend-1:5000'
+    endpoint = 'post-image'
+    response = requests.post(f'{base_url}/{endpoint}', json={'url': map_url.name})
+    print(response.status_code)
 
 def get_global_variables(request):
     data = {
@@ -75,3 +82,4 @@ def get_global_variables(request):
         'map_state': globals.map_state
     }
     return JsonResponse(data)
+
