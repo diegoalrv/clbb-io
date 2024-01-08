@@ -1,6 +1,6 @@
 data
 assets
-*pycache*
+modules/__pycache__/
 # container
 backup
 export
