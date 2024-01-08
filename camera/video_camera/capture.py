@@ -29,8 +29,8 @@ def main():
         ret1, frame1 = cap1.read()
         ret2, frame2 = cap2.read()
         
-        frame1 = cv2.resize(frame1, new_dims)
-        frame2 = cv2.resize(frame2, new_dims)
+        # frame1 = cv2.resize(frame1, new_dims)
+        # frame2 = cv2.resize(frame2, new_dims)
 
         frame = cv2.hconcat([frame1, frame2])
 

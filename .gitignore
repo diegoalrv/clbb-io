@@ -11,3 +11,7 @@ camera/images/*
 clbb-dashboard/node_modules/*
 api/media/*
 api/backend/migrations/*
+assets/*
+data/*
+backup/*
+export/*
