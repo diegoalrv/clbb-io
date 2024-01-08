@@ -39,6 +39,6 @@ def combinar_imagenes(ruta_carpeta, nombre_salida, espacio_blanco=5):
     print(f"Imagen combinada guardada como {nombre_salida}")
 
 if __name__ == "__main__":
-    ruta_carpeta = "/Users/alonsodicandia/asesorias/clbb-io/camera/images/aruco_marker/"
-    nombre_salida = "/Users/alonsodicandia/asesorias/clbb-io/camera/images/all_markers/imagen_combinada.png"
+    ruta_carpeta = "./images"
+    nombre_salida = "./imagen_combinada.png"
     combinar_imagenes(ruta_carpeta, nombre_salida)

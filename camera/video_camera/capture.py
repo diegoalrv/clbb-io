@@ -10,73 +10,61 @@ from utils import calculate_center
 def main():
     START_COMPARING = True
     OLD_COMBINATION = None
+    new_dims = (420, 240)
 
     # Abre la cámara (usualmente la cámara predeterminada, 0)
+    print('Abriendo cámaras')
     cap1 = cv2.VideoCapture(0)
     cap2 = cv2.VideoCapture(2)
     img_path = "./images/capture/imagen.jpg"
 
-    local_url = 'http://localhost:8500'
-    # server_url = 'http://192.168.31.120'
-    server_url = 'http://localhost'
-    api_port = '8500'
-    dash_port = '8900'
-    img_port = '9001'
+    # local_url = 'http://localhost:8500'
+    server_url = 'http://192.168.31.120:8500'
 
     detector = Detector()
 
+    lista_ids_anterior = None
+    print('Comienzo escaneo')
     while True:
         ret1, frame1 = cap1.read()
         ret2, frame2 = cap2.read()
+        
+        frame1 = cv2.resize(frame1, new_dims)
+        frame2 = cv2.resize(frame2, new_dims)
 
         frame = cv2.hconcat([frame1, frame2])
 
         image_with_aruco_marker, corners, ids = detectar_aruco(frame.copy())
-        print(ids)
-        
-        # Finally
-        if START_COMPARING:
-            response = None
-            if len(detector.slots) < 7:
-                continue
-            else:
-                str_slots = ",".join(map(str, detector.slots))
-                url = f'{local_url}:{api_port}/api/maps/?slots={str_slots}'
-            try:
-                # Realiza la solicitud GET
-                print(url)
-                response = requests.get(url)
+        ids.sort()
 
-                # # Verifica si la solicitud fue exitosa (código de estado 200)
-                # if response.status_code == 200:
-                #     # Imprime el contenido de la respuesta
-                #     data = response.json()
-                #     try:
-                #         data = data[0]
-                #         slot_combination = data["name"][-7:]
-                #         if OLD_COMBINATION != slot_combination:
-                #             data_json = requests.get(f'{server_url}:{api_port}/media/json/{slot_combination}.json')
-                #             json_data = data_json.json()
-                #             # print(json_data)
-                #             post_json = requests.post(f'{server_url}:{dash_port}/receive_data', json=json_data)
+        # Compara las listas actual y anterior.
+        if (lista_ids_anterior is not None) and (ids != lista_ids_anterior) and (len(ids) == 7):
+            detector.just_slots_ids(ids.copy())
+            send_states(detector, ids, server_url)  # Ejecuta la función si las listas son diferentes.
 
-                #             OLD_COMBINATION = slot_combination
-                #     except:
-                #         continue
+        # Actualiza la lista anterior con la lista actual.
+        lista_ids_anterior = ids.copy()
 
-                #     image_url = data["image"]
-                #     # print(image_url)
-                #     body = {"new_image_url": image_url}
-                #     post_image = requests.post(f'{server_url}:{img_port}/update_image', json=body)
-                #     # print(post_image.status_code)
-
-            except Exception as e:
-                print(e)
+        # print(ids)
+        # cv2.imshow("Video con aruco", image_with_aruco_marker)
 
     # Libera la cámara y cierra la ventana
     cap1.release()
     cap2.release()
     cv2.destroyAllWindows()
+    pass
+
+def send_states(detector, ids, server_url):
+    try:
+        str_slots = ",".join(map(str, detector.slots))
+        url = f'{server_url}/api/set_map_state/?slots={str_slots}'
+        # Realiza la solicitud GET
+        # print(url)
+        # time.sleep(5)
+        response = requests.get(url)
+        print(response.status_code)
+    except Exception as e:
+        print(e)
 
 if __name__ == '__main__':
     main()
