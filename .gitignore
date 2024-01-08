@@ -15,3 +15,9 @@ assets/*
 data/*
 backup/*
 export/*
+data
+assets
+modules/__pycache__/
+# container
+backup
+expo
