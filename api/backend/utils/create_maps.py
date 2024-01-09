@@ -20,12 +20,18 @@ from backend.models.maps import Map
 from backend.models.slots import Slot
 
 slider = {
-     'diversidad_suelo': 1,
-     'educacion': 2,
-     'proximidad_cultura': 3,
-     'poblacion': 4,
-     'parques': 6,
-     'plazas': 7
+    'diversidad_suelo': 1,
+    'educacion': 2,
+    'proximidad_cultura': 3,
+    'poblacion': 4,
+    'entretenimiento': 5,
+    'parques': 6,
+    'plazas': 7,
+    'aprovisionamiento': 8,
+    'comercio': 9,
+    'edificacion': 10,
+    'salud': 10+1,
+    #  'test': 99,
 }
 
 Map.objects.all().delete()
@@ -35,6 +41,7 @@ carpeta_imagenes = '/app/media/final_maps/'  # Ajusta la ruta según tu estructu
 
 subcarpetas = [d for d in os.listdir(carpeta_imagenes) if os.path.isdir(os.path.join(carpeta_imagenes, d))]
 
+print(subcarpetas)
 
 for carpeta in subcarpetas: 
     # Obtén la lista de archivos en la carpeta
@@ -49,7 +56,7 @@ for carpeta in subcarpetas:
     # Ordena los archivos según su número
     archivos_ordenados = sorted(archivos_en_subcarpeta)
 
-    nombre_mapa = carpeta.replace('mapas_', '')
+    nombre_mapa = carpeta.replace('mapa_', '')
 
     # Recorre los archivos y crea instancias de Map
     for archivo in archivos_ordenados:
@@ -77,8 +84,8 @@ for carpeta in subcarpetas:
         ruta_imagen = os.path.join(subcarpeta_path, archivo)
 
         if os.path.exists(ruta_imagen):
-                with open(ruta_imagen, 'rb') as imagen_file:
-                    mapa.image.save(f'{nombre_mapa}/{map_number}.png', File(imagen_file), save=True)
+            with open(ruta_imagen, 'rb') as imagen_file:
+                mapa.image.save(f'{nombre_mapa}/{map_number}.png', File(imagen_file), save=True)
 
         mapa.save()
 

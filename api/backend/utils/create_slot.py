@@ -28,7 +28,7 @@ def init_slots():
         for i in range(1, 8):
             slot_name = f"{slot_state}_{i}"
             aruco_id = first_aruco + i  # Comienza en 13 y se incrementa en 1
-            aruco_marker = f'/Users/alonsodicandia/asesorias/clbb-io/camera/images/aruco_marker/marker_{aruco_id}.png'  # Ajusta la extensión de la imagen según tu caso
+            aruco_marker = os.path.join('C:','Users','Admn','ds','clbb-io','camera','images','aruco_marker',f'marker_{aruco_id}.png')  # Ajusta la extensión de la imagen según tu caso
             position_on_map = i
             lego_image = None
 

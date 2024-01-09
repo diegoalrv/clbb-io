@@ -12,8 +12,12 @@ def set_map_type(request):
     print(request.body)
     if request.method == 'POST':        
         data = json.loads(request.body)
-        print(data)
+        # print(data).
         globals.map_type = data.get('map_type')
+        return check_and_send_map()
+    elif request.method == 'GET':
+        type_param = request.GET.get('map_type', 1)
+        globals.map_type = type_param
         return check_and_send_map()
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
@@ -58,9 +62,15 @@ def get_filter_map():
     return map_instance if map_instance else None
 
 def check_and_send_map():
+    print('Check and send map')
+    print(globals.map_state)
+    print(globals.map_type)
+    print('Condicion')
+    print(globals.map_type and len(globals.map_state)>0)
     if globals.map_type and globals.map_state:
         # Aquí implementas la lógica para obtener la URL del mapa
         map_instance = get_filter_map()
+        print(map_instance)
         if map_instance:
             # Enviar la URL a otro servicio
             send_map_url_to_service(map_instance.image)
@@ -86,7 +96,8 @@ def send_json_data_to_dashboard(map_url):
     base_url = 'http://dash3-backend-1:8900'
     endpoint = 'receive_data'
     response = requests.post(f'{base_url}/{endpoint}', data=json_data)
-    
+
+@csrf_exempt
 def get_global_variables(request):
     data = {
         'map_type': globals.map_type,
