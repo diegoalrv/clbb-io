@@ -12,13 +12,13 @@ class Detector:
 
     def check_coin(self, ids):
         ids = set(ids)
+        return ids
+        # intersection = self.coin_ids & ids
 
-        intersection = self.coin_ids & ids
-
-        if len(intersection) > 0:
-            return list(intersection)[0]
-        else:
-            return None
+        # if len(intersection) > 0:
+        #     return list(intersection)[0]
+        # else:
+        #     return None
     
     def just_slots_ids(self, ids):
         slots = list(filter(lambda x: x >= 13, ids))

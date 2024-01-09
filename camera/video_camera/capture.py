@@ -15,7 +15,7 @@ def main():
     # Abre la cámara (usualmente la cámara predeterminada, 0)
     print('Abriendo cámaras')
     cap1 = cv2.VideoCapture(0)
-    cap2 = cv2.VideoCapture(2)
+    cap2 = cv2.VideoCapture(1)
     img_path = "./images/capture/imagen.jpg"
 
     # local_url = 'http://localhost:8500'
@@ -26,27 +26,32 @@ def main():
     lista_ids_anterior = None
     print('Comienzo escaneo')
     while True:
-        ret1, frame1 = cap1.read()
-        ret2, frame2 = cap2.read()
-        
-        # frame1 = cv2.resize(frame1, new_dims)
-        # frame2 = cv2.resize(frame2, new_dims)
+        try:
+            ret1, frame1 = cap1.read()
+            ret2, frame2 = cap2.read()
+            
+            # frame1 = cv2.resize(frame1, new_dims)
+            # frame2 = cv2.resize(frame2, new_dims)
 
-        frame = cv2.hconcat([frame1, frame2])
+            frame = cv2.hconcat([frame1, frame2])
 
-        image_with_aruco_marker, corners, ids = detectar_aruco(frame.copy())
-        ids.sort()
+            image_with_aruco_marker, corners, ids = detectar_aruco(frame.copy())
+            # ids.append(16)
+            ids.sort()
+            print(ids)
+            # Compara las listas actual y anterior.
+            if (lista_ids_anterior is not None) and (ids != lista_ids_anterior) and (len(ids) == 7):
+                detector.just_slots_ids(ids.copy())
+                send_states(detector, ids, server_url)  # Ejecuta la función si las listas son diferentes.
 
-        # Compara las listas actual y anterior.
-        if (lista_ids_anterior is not None) and (ids != lista_ids_anterior) and (len(ids) == 7):
-            detector.just_slots_ids(ids.copy())
-            send_states(detector, ids, server_url)  # Ejecuta la función si las listas son diferentes.
+            # Actualiza la lista anterior con la lista actual.
+            lista_ids_anterior = ids.copy()
 
-        # Actualiza la lista anterior con la lista actual.
-        lista_ids_anterior = ids.copy()
-
-        # print(ids)
-        # cv2.imshow("Video con aruco", image_with_aruco_marker)
+            # print(ids)
+            # cv2.imshow("Video con aruco", frame1)
+            # time.sleep(1)
+        except:
+            pass
 
     # Libera la cámara y cierra la ventana
     cap1.release()
