@@ -7,6 +7,7 @@ from backend.models.maps import Map
 from django.db.models import Q
 import os
 
+
 @csrf_exempt
 def set_map_type(request):
     print(request.body)
@@ -104,4 +105,6 @@ def get_global_variables(request):
         'map_state': globals.map_state
     }
     return JsonResponse(data)
+
+
 
