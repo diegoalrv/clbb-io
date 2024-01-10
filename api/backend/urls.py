@@ -3,7 +3,9 @@ from django.urls import path, include
 from backend.views.map.map import MapViewSet, TestImageViewSet
 from backend.views.slots.slots import SlotViewSet
 from backend.views.globals import views as globalviews
-from backend.views import maps
+
+
+
 
 router = DefaultRouter()
 router.register(r'maps', MapViewSet)
@@ -15,5 +17,5 @@ urlpatterns = [
     path('set_map_type/', globalviews.set_map_type, name='set_map_type'),
     path('set_map_state/', globalviews.set_map_state, name='set_map_state'),
     path('get_globals/', globalviews.get_global_variables, name='get_globals'),
-    # path('maps/',maps)
+    #path('what_map/',globalviews.what_map, name='what_map')
 ]

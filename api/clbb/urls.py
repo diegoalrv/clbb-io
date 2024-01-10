@@ -18,10 +18,12 @@ from django.urls import path, include
 
 from django.conf import settings
 from django.conf.urls.static import static
+from backend.views.globals.views import what_map
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('backend.urls'))
+    path('api/', include('backend.urls')),
+    path('what_map/', what_map, name='what_map')
 ]
 
 if settings.DEBUG:

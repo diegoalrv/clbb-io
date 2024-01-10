@@ -106,5 +106,17 @@ def get_global_variables(request):
     }
     return JsonResponse(data)
 
+@csrf_exempt
+def what_map(request):
+    datos = Map.objects.all()
+    sliders_unicos = set()
+    data_json = []
+    for x in datos:
+        slider = x.slider
+        name = x.name
+        if slider not in sliders_unicos:
+            data_json.append({'name': name, 'slider': slider})
+            sliders_unicos.add(slider)
+    return JsonResponse(data_json, safe=False)
 
 
