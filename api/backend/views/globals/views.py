@@ -5,6 +5,7 @@ import requests
 from backend import globals
 from backend.models.maps import Map
 from django.db.models import Q
+import os
 
 @csrf_exempt
 def set_map_type(request):
@@ -63,6 +64,7 @@ def check_and_send_map():
         if map_instance:
             # Enviar la URL a otro servicio
             send_map_url_to_service(map_instance.image)
+            send_json_data_to_dashboard(map_instance.image)
             return JsonResponse({'message': 'Map processed and sent'})
     return JsonResponse({'message': 'Map type or state not set'})
 
@@ -76,6 +78,15 @@ def send_map_url_to_service(map_url):
     response = requests.post(f'{base_url}/{endpoint}', json={'url': map_url.name})
     print(response.status_code)
 
+def send_json_data_to_dashboard(map_url):
+    slot_combination = os.path.split(map_url.name)[-1].split('.')[0]
+    json_path = f'media/json/{slot_combination}.json'
+    with open(json_path, 'r') as json_file:
+        json_data = json_file.read()
+    base_url = 'http://dash3-backend-1:8900'
+    endpoint = 'receive_data'
+    response = requests.post(f'{base_url}/{endpoint}', data=json_data)
+    
 def get_global_variables(request):
     data = {
         'map_type': globals.map_type,
