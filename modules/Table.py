@@ -121,6 +121,7 @@ class TableUserInferface(Base.BaseModule):
     def calc_heatmaps_kpis(self):
         if 'Amenities' in self.modules_available:
             self.calc_travel_time_to_amenities()
+            self.calc_amenities_density()
             self.calc_amenities_density_interested_category()
         if 'GreenAreas' in self.modules_available: self.calc_travel_time_to_green_areas()
         if 'LandUses' in self.modules_available: self.calc_land_uses_diversity()

@@ -22,5 +22,4 @@ RUN apt-get update && apt-get install -y \
 # Copia el código fuente al directorio de trabajo
 COPY . .
 
-# Configura Jupyter Notebook como el comando por defecto para ejecutar la aplicación
 CMD ["python", "app.py"]

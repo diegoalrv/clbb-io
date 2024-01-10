@@ -66,7 +66,8 @@ for index, row in combinaciones_placas_estados.iterrows():
                     plate_id=plate_id,
                     scenario_id=row[plate_id]
                 )
-            tui.calc_heatmaps_kpis()
+            # tui.calc_heatmaps_kpis()
+            tui.calc_amenities_density()
             heatmaps = tui.heat_maps
             logging.info(f'Guardando en carpeta: {folder}')
             # [gdf.to_file(os.path.join(path, key)) for key, gdf in heatmaps.items()];
