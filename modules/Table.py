@@ -555,6 +555,7 @@ class TableUserInferface(Base.BaseModule):
         count_by_unit = gpd.GeoDataFrame(data=count_by_unit[count_cols], geometry=count_by_unit['geometry'])
         count_by_unit['density'] = count_by_unit['amenities_count']/count_by_unit['area']
         self.amenities_density = count_by_unit
+        self.heat_maps[f'amenities_density'] = count_by_unit
         pass
 
     def calc_amenities_density_by_category(self, category):

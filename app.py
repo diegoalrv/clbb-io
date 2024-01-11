@@ -43,7 +43,7 @@ combinaciones_estados = list(product(scenario_ids, repeat=len(plates_ids)))
 combinaciones_placas_estados = pd.DataFrame(combinaciones_estados, columns=plates_ids)
 
 # Ruta de la carpeta de exportación
-carpeta_exportacion = "/app/export/"
+carpeta_exportacion = "/app/export/maps/"
 
 # Crea las carpetas con los nombres de las combinaciones de estados
 for combinacion in combinaciones_estados:
@@ -66,7 +66,8 @@ for index, row in combinaciones_placas_estados.iterrows():
                     plate_id=plate_id,
                     scenario_id=row[plate_id]
                 )
-            tui.calc_heatmaps_kpis()
+            # tui.calc_heatmaps_kpis()
+            tui.calc_amenities_density()
             heatmaps = tui.heat_maps
             logging.info(f'Guardando en carpeta: {folder}')
             # [gdf.to_file(os.path.join(path, key)) for key, gdf in heatmaps.items()];

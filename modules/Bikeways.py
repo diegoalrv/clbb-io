@@ -31,11 +31,14 @@ class Bikeways(BaseModule):
         intersection = gpd.overlay(bikes, gdf, how='intersection')
         return intersection['length'].sum()
 
-    def calc_linear_meters(self):
+    def calc_linear_meters(self, normalize=True):
         bikes = self.current_scenario.copy()
         gdf = self.area_scope.copy()
         intersection = gpd.overlay(bikes, gdf, how='intersection')
-        return intersection['length'].sum()/self.calc_max_linear_meters()
+        if normalize:
+            return intersection['length'].sum()/self.calc_max_linear_meters()
+        else:
+            return intersection['length'].sum()
 
     def calculate_lineal_meters_by_neighborhoods(self):
         gdf = gpd.read_file('/app/assets/neighborhoods/all').to_crs(32718)
