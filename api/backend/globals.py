@@ -3,6 +3,7 @@
 
 map_type = None
 map_state = None
+aestatic_type = None
 
 SLOTS_IDS = {
     '13': 0,

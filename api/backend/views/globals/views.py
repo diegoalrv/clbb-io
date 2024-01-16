@@ -4,8 +4,10 @@ from django.http import JsonResponse
 import requests
 from backend import globals
 from backend.models.maps import Map
+from backend.models.aestatics import AeStatic
 from django.db.models import Q
 import os
+from django.core.serializers import serialize
 
 
 @csrf_exempt
@@ -82,8 +84,6 @@ def check_and_send_map():
 def send_map_url_to_service(map_url):
     # Implementa la lógica para enviar la URL a otro servicio
     print(map_url.name)
-    #return JsonResponse({'message': map_url.name})
-    # base_url = 'http://localhost:5000'
     base_url = 'http://bug-free-train-backend-1:5000'
     endpoint = 'post-image'
     response = requests.post(f'{base_url}/{endpoint}', json={'url': map_url.name})
@@ -106,6 +106,7 @@ def get_global_variables(request):
     }
     return JsonResponse(data)
 
+# listar json de cuales son los mapas que hay
 @csrf_exempt
 def what_map(request):
     datos = Map.objects.all()
@@ -119,4 +120,61 @@ def what_map(request):
             sliders_unicos.add(slider)
     return JsonResponse(data_json, safe=False)
 
+@csrf_exempt
+def what_aestatic(request):
+    datos = AeStatic.objects.all()
+    sliders_unicos = set()
+    data_json = []
+    for x in datos:
+        slider = x.slider
+        name = x.name
+        if slider not in sliders_unicos:
+            data_json.append({'name': name, 'slider': slider})
+            sliders_unicos.add(slider)
+    return JsonResponse(data_json, safe=False)
 
+
+@csrf_exempt
+def loadaestetic(request):
+    print(request)
+    if request.method == 'GET':
+        type_param = request.GET.get('loadaestetic', 1)
+        print(type_param)
+        skeree = request.GET.get('aestatic_type')
+        print(skeree)
+        globals.aestatic_type = type_param
+        return check_and_send_aestetic(skeree)
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+def check_and_send_aestetic(valor):
+    if globals.aestatic_type:
+        # Aquí implementas la lógica para obtener la URL del mapa
+        map_instance = get_filter_aestetic(valor)
+        print(map_instance)
+        if map_instance:
+            # Enviar la URL a otro servicio
+            send_map_url_to_serviceAE(map_instance.aestatic_file)
+            return JsonResponse({'message': 'Gif enviado'})
+    return JsonResponse({'message': 'Map type or state not set'})
+
+def get_filter_aestetic(valor):
+    # Utiliza las variables globales para filtrar el queryset
+    slider_param = globals.aestatic_type
+
+    queryset = AeStatic.objects.all()
+
+    queryset = queryset.filter(
+        slider=valor)
+    # Obtén el mapa correspondiente (asumiendo que quieres el primero que coincida)
+    aestatic_instance = queryset.first()
+    return aestatic_instance if aestatic_instance else None
+
+
+def send_map_url_to_serviceAE(aestatic_url):
+    # Implementa la lógica para enviar la URL a otro servicio
+    print(aestatic_url.name)
+    base_url = 'http://bug-free-train-backend-1:5000'
+    endpoint = 'post-image'
+    response = requests.post(f'{base_url}/{endpoint}', json={'url': aestatic_url.name})
+    print(response.status_code)

@@ -19,3 +19,4 @@ urlpatterns = [
     path('get_globals/', globalviews.get_global_variables, name='get_globals'),
     #path('what_map/',globalviews.what_map, name='what_map')
 ]
+

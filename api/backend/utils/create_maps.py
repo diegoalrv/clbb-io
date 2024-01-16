@@ -34,7 +34,7 @@ slider = {
     #  'test': 99,
 }
 
-Map.objects.all().delete()
+#Map.objects.all().delete()
 
 # Ruta de la carpeta que contiene las imágenes
 carpeta_imagenes = '/app/media/final_maps/'  # Ajusta la ruta según tu estructura

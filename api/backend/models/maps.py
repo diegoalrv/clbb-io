@@ -31,3 +31,4 @@ class Map(models.Model):
     
 class TestImage(models.Model):
     image = models.ImageField(upload_to='test/')
+
