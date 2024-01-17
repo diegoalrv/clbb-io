@@ -120,6 +120,7 @@ def what_map(request):
             sliders_unicos.add(slider)
     return JsonResponse(data_json, safe=False)
 
+# lista un json de los objetos staticos
 @csrf_exempt
 def what_aestatic(request):
     datos = AeStatic.objects.all()
@@ -133,7 +134,7 @@ def what_aestatic(request):
             sliders_unicos.add(slider)
     return JsonResponse(data_json, safe=False)
 
-
+#  es como el set_map_type
 @csrf_exempt
 def loadaestetic(request):
     print(request)
@@ -170,7 +171,7 @@ def get_filter_aestetic(valor):
     aestatic_instance = queryset.first()
     return aestatic_instance if aestatic_instance else None
 
-
+# envia un post al bug-free-train
 def send_map_url_to_serviceAE(aestatic_url):
     # Implementa la lógica para enviar la URL a otro servicio
     print(aestatic_url.name)
