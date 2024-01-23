@@ -12,6 +12,7 @@ class Map(models.Model):
     coin = models.ForeignKey(Coin, on_delete=models.CASCADE, blank=True, null=True)
     slug = models.SlugField(unique=True, max_length=250, blank=True)
     image = models.ImageField(upload_to='maps/')
+    category = models.CharField(max_length=250,default='without category')  # se agrego campo category
 
     slot1 = models.ForeignKey(Slot, on_delete=models.CASCADE, blank=True, null=True, related_name='slot1')
     slot2 = models.ForeignKey(Slot, on_delete=models.CASCADE, blank=True, null=True, related_name='slot2')

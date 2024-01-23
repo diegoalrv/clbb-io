@@ -6,7 +6,7 @@ from backend.models.aestatics import AeStatic
 
 @admin.register(Map)
 class MapAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slider', 'slug')
+    list_display = ('name', 'slider', 'slug','category')
     search_fields = ['name']
     
 @admin.register(AeStatic)

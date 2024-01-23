@@ -4,6 +4,7 @@
 map_type = None
 map_state = None
 aestatic_type = None
+list_temp = []
 
 SLOTS_IDS = {
     '13': 0,

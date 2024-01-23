@@ -8,6 +8,7 @@ from backend.models.aestatics import AeStatic
 from django.db.models import Q
 import os
 from django.core.serializers import serialize
+import time
 
 
 @csrf_exempt
@@ -25,6 +26,34 @@ def set_map_type(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
+# @csrf_exempt
+# def set_map_state(request):
+#     if request.method == 'GET':
+#         slots_param = request.GET.get('slots', '')  # Obtiene el parámetro 'slots' de la URL
+#         if slots_param:
+#             print('list_temp ',globals.list_temp)
+#             slots_list = sorted(slots_param.split(','))
+#             #agregar los valores a la lista vacia
+#             globals.list_temp.extend(slots_list) 
+#             # si estan los 7 valores que siga normal
+#             if len(globals.list_temp) == 7: 
+#                 slots_list = globals.list_temp.copy()
+#                 print('globals.list_temp: ',globals.list_temp)
+#                 print('slots_list: ',slots_list)
+#                 for num in slots_list:
+#                     if int(num) >= 20:
+#                         slots_list.remove(num)
+#                         slots_list.insert(globals.SLOTS_IDS[str(int(num)-7)], num)
+#                 globals.map_state = slots_list  # Actualiza la variable global
+#                 globals.list_temp = []
+#                 return check_and_send_map()
+#             else: 
+#                 return JsonResponse({"error":"hay menos de 7 slots, enviar el que falta"})
+#         else:
+#             return JsonResponse({'error': 'No slots parameter provided'}, status=400)
+#     else:
+#         return JsonResponse({'error': 'Invalid request'},status=400)
+
 @csrf_exempt
 def set_map_state(request):
     if request.method == 'GET':
@@ -41,6 +70,7 @@ def set_map_state(request):
             return JsonResponse({'error': 'No slots parameter provided'}, status=400)
     else:
         return JsonResponse({'error': 'Invalid request'}, status=400)
+
 
 def get_filter_map():
     # Utiliza las variables globales para filtrar el queryset
@@ -94,7 +124,7 @@ def send_json_data_to_dashboard(map_url):
     json_path = f'media/json/{slot_combination}.json'
     with open(json_path, 'r') as json_file:
         json_data = json_file.read()
-    base_url = 'http://dash3-backend-1:8900'
+    base_url = 'http://clbb-front-backend-1:8900'
     endpoint = 'receive_data'
     response = requests.post(f'{base_url}/{endpoint}', data=json_data)
 
