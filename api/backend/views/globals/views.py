@@ -26,50 +26,55 @@ def set_map_type(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-# @csrf_exempt
-# def set_map_state(request):
-#     if request.method == 'GET':
-#         slots_param = request.GET.get('slots', '')  # Obtiene el parámetro 'slots' de la URL
-#         if slots_param:
-#             print('list_temp ',globals.list_temp)
-#             slots_list = sorted(slots_param.split(','))
-#             #agregar los valores a la lista vacia
-#             globals.list_temp.extend(slots_list) 
-#             # si estan los 7 valores que siga normal
-#             if len(globals.list_temp) == 7: 
-#                 slots_list = globals.list_temp.copy()
-#                 print('globals.list_temp: ',globals.list_temp)
-#                 print('slots_list: ',slots_list)
-#                 for num in slots_list:
-#                     if int(num) >= 20:
-#                         slots_list.remove(num)
-#                         slots_list.insert(globals.SLOTS_IDS[str(int(num)-7)], num)
-#                 globals.map_state = slots_list  # Actualiza la variable global
-#                 globals.list_temp = []
-#                 return check_and_send_map()
-#             else: 
-#                 return JsonResponse({"error":"hay menos de 7 slots, enviar el que falta"})
-#         else:
-#             return JsonResponse({'error': 'No slots parameter provided'}, status=400)
-#     else:
-#         return JsonResponse({'error': 'Invalid request'},status=400)
-
 @csrf_exempt
 def set_map_state(request):
     if request.method == 'GET':
         slots_param = request.GET.get('slots', '')  # Obtiene el parámetro 'slots' de la URL
         if slots_param:
+            print('list_temp ',globals.list_temp)
             slots_list = sorted(slots_param.split(','))
-            for num in slots_list:
-                if int(num) >= 20:
-                    slots_list.remove(num)
-                    slots_list.insert(globals.SLOTS_IDS[str(int(num)-7)], num)
-            globals.map_state = slots_list  # Actualiza la variable global
-            return check_and_send_map()
+            #agregar los valores a la lista vacia
+            for numero in slots_list:
+                if numero not in globals.list_temp:
+                    globals.list_temp.append(numero) 
+                    print(globals.list_temp)
+            # si estan los 7 valores que siga normal
+            if len(globals.list_temp) == 7: 
+                slots_list = globals.list_temp.copy()
+                print('globals.list_temp: ',globals.list_temp)
+                print('slots_list: ',slots_list)
+                for num in slots_list:
+                    if int(num) >= 20:
+                        slots_list.remove(num)
+                        slots_list.insert(globals.SLOTS_IDS[str(int(num)-7)], num)
+                globals.map_state = slots_list  # Actualiza la variable global
+                globals.list_temp = []
+                return check_and_send_map()
+            elif len(globals.list_temp) > 7:
+                globals.list_temp = []
+            else: 
+                return JsonResponse({"error":"hay menos de 7 slots, enviar el que falta"})
         else:
             return JsonResponse({'error': 'No slots parameter provided'}, status=400)
     else:
-        return JsonResponse({'error': 'Invalid request'}, status=400)
+        return JsonResponse({'error': 'Invalid request'},status=400)
+
+#@csrf_exempt
+# def set_map_state(request):
+#     if request.method == 'GET':
+#         slots_param = request.GET.get('slots', '')  # Obtiene el parámetro 'slots' de la URL
+#         if slots_param:
+#             slots_list = sorted(slots_param.split(','))
+#             for num in slots_list:
+#                 if int(num) >= 20:
+#                     slots_list.remove(num)
+#                     slots_list.insert(globals.SLOTS_IDS[str(int(num)-7)], num)
+#             globals.map_state = slots_list  # Actualiza la variable global
+#             return check_and_send_map()
+#         else:
+#             return JsonResponse({'error': 'No slots parameter provided'}, status=400)
+#     else:
+#         return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
 def get_filter_map():
