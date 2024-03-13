@@ -34,7 +34,7 @@ slider = {
     #  'test': 99,
 }
 
-#Map.objects.all().delete()
+# Map.objects.all().delete()
 
 # Ruta de la carpeta que contiene las imágenes
 carpeta_imagenes = '/app/media/final_maps/'  # Ajusta la ruta según tu estructura
@@ -71,7 +71,7 @@ for carpeta in subcarpetas:
             name=f"{nombre_mapa}_{map_number}",
             slider=slider[nombre_mapa],
             image=None,
-            slot1=Slot.objects.get(position_on_map=1, aruco_id=13 + int(map_number[0]) * 7),  # Ajusta según tus necesidades
+            slot1=Slot.objects.get(position_on_map=1, aruco_id=13 + int(map_number[0]) * 7),
             slot2=Slot.objects.get(position_on_map=2, aruco_id=14 + int(map_number[1]) * 7),
             slot3=Slot.objects.get(position_on_map=3, aruco_id=15 + int(map_number[2]) * 7),
             slot4=Slot.objects.get(position_on_map=4, aruco_id=16 + int(map_number[3]) * 7),

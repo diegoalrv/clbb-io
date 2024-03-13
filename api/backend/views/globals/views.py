@@ -37,7 +37,7 @@ def set_map_state(request):
             for numero in slots_list:
                 if numero not in globals.list_temp:
                     globals.list_temp.append(numero) 
-                    print(globals.list_temp)
+                    print(globals.list_temp.sort())
             # si estan los 7 valores que siga normal
             if len(globals.list_temp) == 7: 
                 slots_list = globals.list_temp.copy()
