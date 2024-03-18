@@ -4,6 +4,7 @@ services:
     container_name: clbb_web
     build: ./api/.
     command: python manage.py runserver 0.0.0.0:8000
+    restart: always
     env_file:
        - ./api/.env
     ports:
@@ -14,13 +15,16 @@ services:
       - db
     networks:
       - clbb
-  db:
+  db:  
     container_name: clbb_db
     image: postgres:latest
+    restart: always
     environment:
       POSTGRES_DB: clbb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: qwerty1234
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - clbb
 
@@ -28,5 +32,7 @@ networks:
   clbb:
     external: true
 
+volumes:
+  postgres_data:
 
 

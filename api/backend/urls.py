@@ -16,6 +16,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('set_map_type/', globalviews.set_map_type, name='set_map_type'),
     path('set_map_state/', globalviews.set_map_state, name='set_map_state'),
+    # path('set_map_state2/', globalviews.set_map_state2, name='set_map_state2'),
     path('get_globals/', globalviews.get_global_variables, name='get_globals'),
     #path('what_map/',globalviews.what_map, name='what_map')
 ]

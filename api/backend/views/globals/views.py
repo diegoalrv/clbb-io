@@ -59,8 +59,8 @@ def set_map_state(request):
     else:
         return JsonResponse({'error': 'Invalid request'},status=400)
 
-#@csrf_exempt
-# def set_map_state(request):
+# @csrf_exempt
+# def set_map_state2(request):
 #     if request.method == 'GET':
 #         slots_param = request.GET.get('slots', '')  # Obtiene el parámetro 'slots' de la URL
 #         if slots_param:
