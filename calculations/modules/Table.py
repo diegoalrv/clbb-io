@@ -322,21 +322,29 @@ class TableUserInferface(Base.BaseModule):
         pass
     
     def radar_num_land_uses(self):
-        lu = self.heat_maps['land_uses_diversity']
-        self.radar_kpis['Usos de Suelo'] = 100*lu.loc[lu['diversity']>0, 'diversity'].mean()
-        valor_usos_de_suelo = self.radar_kpis['Usos de Suelo']
+        lu = self.lu.get_current_land_uses()
 
-        # Elimina 'Usos de Suelo' del diccionario original
-        del self.radar_kpis['Usos de Suelo']
+        lu['area_predio'] = lu['geometry'].area
 
-        # Añade 'Usos de Suelo' a 'categorias' y su valor correspondiente a 'valoresSet1'
+        total_area = lu['area_predio'].sum()
+
+        gdf_group_uso = lu[['Uso', 'area_predio']].groupby('Uso')['area_predio'].agg('sum').reset_index().rename(columns={'area_predio':'area_uso'})
+        gdf_group_uso['porcion_uso'] = gdf_group_uso['area_uso']/total_area
+        gdf_group_uso['info_uso'] = -1*gdf_group_uso['porcion_uso']*np.log2(gdf_group_uso['porcion_uso'])
+        diversity = gdf_group_uso['info_uso'].sum()
+
+        try:
+            del self.radar_kpis['Usos de Suelo']
+        except:
+            pass
+
         self.radar_kpis['radar']['categorias'].append('Usos de Suelo')
-        self.radar_kpis['radar']['valoresSet1'].append(valor_usos_de_suelo)
+        self.radar_kpis['radar']['valoresSet1'].append(diversity)
         pass
     
     def calc_dist_land_uses(self):
-        gdf = self.lu.get_current_land_uses().copy()
-
+        gdf = self.lu.get_current_land_uses()
+        
         porcentaje_limit = 3
 
         # Calcular la distribución de Uso según area_predio
@@ -365,9 +373,9 @@ class TableUserInferface(Base.BaseModule):
 
         # Crear una lista de diccionarios en el formato deseado
         tipos = []
-        for index, row in uso_distribucion.iterrows():
+        for _, row in uso_distribucion.iterrows():
             tipo = {
-                "nombre": row['Uso'],  # Elimina espacios en blanco al principio y al final
+                "nombre": row['Uso'],
                 "valor": int(row['porcentaje_area'])  # Convierte el porcentaje a entero
             }
             tipos.append(tipo)
@@ -380,8 +388,6 @@ class TableUserInferface(Base.BaseModule):
         }
 
         self.land_uses_kpis.update(json_output)
-        # # Convertir a JSON y mostrarlo o guardar en un archivo
-        # print(json.dumps(json_output, indent=2))
         pass
 
     def calc_numeric_densities(self):
