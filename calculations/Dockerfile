@@ -8,16 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Instala las dependencias
-RUN apt-get update && apt-get install -y \
-    libhdf5-dev \
-    build-essential \
-    libgomp1 \
-    libgl1-mesa-glx \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia el código fuente al directorio de trabajo
 COPY . .

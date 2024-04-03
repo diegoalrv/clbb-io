@@ -66,12 +66,15 @@ for index, row in combinaciones_placas_estados.iterrows():
                     plate_id=plate_id,
                     scenario_id=row[plate_id]
                 )
-            # tui.calc_heatmaps_kpis()
-            tui.calc_amenities_density()
-            heatmaps = tui.heat_maps
+            # tui.calc_population_density()
+            # tui.calc_amenities_density()
+            tui.calc_heatmaps_kpis()
+            # heatmaps = tui.heat_maps
             logging.info(f'Guardando en carpeta: {folder}')
+            tui.generate_json_data()
+            tui.export_json_data(combination=folder)
             # [gdf.to_file(os.path.join(path, key)) for key, gdf in heatmaps.items()];
-            [gdf.to_parquet(os.path.join(path, f'{key}.parquet')) for key, gdf in heatmaps.items()];
+            # [gdf.to_parquet(os.path.join(path, f'{key}.parquet')) for key, gdf in heatmaps.items()];
         except Exception as e:
             logging.error(f'Error en carpeta: {folder}, error: {str(e)}')
     else:

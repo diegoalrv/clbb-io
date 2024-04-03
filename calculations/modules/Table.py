@@ -834,8 +834,8 @@ class TableUserInferface(Base.BaseModule):
         self.json_data = json_export
         pass
 
-    def export_json_data(self, combination):
-        filename = os.path.join(f'/app/export/json/{combination}.json')
+    def export_json_data(self, combination, save_path='/app/export/json'):
+        filename = os.path.join(save_path, f'{combination}.json')
         with open(filename, "w") as archivo:
             json.dump(self.json_data, archivo, indent=4)
         self.reset_json_data()
