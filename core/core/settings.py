@@ -129,5 +129,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 ASGI_APPLICATION = "core.asgi.application"
 
-# LOGIN_REDIRECT_URL = "index"
-# LOGOUT_REDIRECT_URL = "index"
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('redis', 6379)],  # Asegúrate de que Redis esté corriendo en el puerto correcto
+        },
+    },
+}
