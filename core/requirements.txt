@@ -1,0 +1,13 @@
+Django
+djangorestframework
+# channels[daphne]
+djangochannelsrestframework
+
+requests
+# uvicornS
+uuid
+pillow
+
+# Database
+dj_database_url
+psycopg2-binary
