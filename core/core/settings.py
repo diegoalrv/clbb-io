@@ -32,6 +32,8 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne', # ⬅ ASGI Webserver
+    'websocket_app', # ⬅ Django Channels App
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -124,3 +126,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "media"
+
+ASGI_APPLICATION = "core.asgi.application"
+
+# LOGIN_REDIRECT_URL = "index"
+# LOGOUT_REDIRECT_URL = "index"

@@ -22,3 +22,4 @@ calculations/export/*
 
 .venv/
 migrations/
+*test*.html

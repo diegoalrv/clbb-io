@@ -1,6 +1,6 @@
 Django
 djangorestframework
-# channels[daphne]
+channels[daphne]
 djangochannelsrestframework
 
 requests
