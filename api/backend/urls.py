@@ -4,9 +4,6 @@ from backend.views.map.map import MapViewSet, TestImageViewSet
 from backend.views.slots.slots import SlotViewSet
 from backend.views.globals import views as globalviews
 
-
-
-
 router = DefaultRouter()
 router.register(r'maps', MapViewSet)
 router.register(r'image', TestImageViewSet)

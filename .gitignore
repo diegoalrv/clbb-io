@@ -19,3 +19,6 @@ calculations/assets/*
 calculations/logs/*
 calculations/export/*
 *__pycache__*
+
+.venv/
+migrations/
