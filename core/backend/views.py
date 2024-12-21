@@ -64,18 +64,18 @@ class CustomActionsViewSet(viewsets.ViewSet):
 
         # Enviar los datos al canal adecuado, en este caso 'map_channel' y 'dashboard_channel'
         # Puedes personalizar los nombres de los canales de acuerdo a tus necesidades
-        try:
-            channels = ['map_image', 'map_geojson', 'dashboard']
-            channel = channels[0]
-            # for channel in channels:
-            async_to_sync(channel_layer.group_send)(
-                f'{channel}_channel',  # Enviar a los consumidores del mapa
-                {
-                    'type': 'update_data',  # El tipo de evento que el consumidor manejará
-                    'channel_type': channel,
-                    'message': message
-                }
-            )
+        # try:
+            # channels = ['map_image', 'map_geojson', 'dashboard']
+            # channel = channels[0]
+            # # for channel in channels:
+            # async_to_sync(channel_layer.group_send)(
+            #     f'{channel}_channel',  # Enviar a los consumidores del mapa
+            #     {
+            #         'type': 'update_data',  # El tipo de evento que el consumidor manejará
+            #         'channel_type': channel,
+            #         'message': message
+            #     }
+            # )
             # async_to_sync(channel_layer.group_send)(
             #     'dashboard_channel',  # Enviar a los consumidores del dashboard
             #     {
@@ -85,8 +85,8 @@ class CustomActionsViewSet(viewsets.ViewSet):
             #     }
             # )
         
-        except Exception as e:
-            print(e)
+        # except Exception as e:
+        #     print(e)
     
     @action(detail=False, methods=['get'])
     def get_global_variables(self, request):
@@ -148,34 +148,31 @@ class CustomActionsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def get_image_data(self, request):
-        print(globals.INDICATOR_ID)
         indicator = Indicator.objects.filter(indicator_id=globals.INDICATOR_ID)
-        print(len(indicator))
-        if(len(indicator) == 1):
+        if(indicator.first().has_states == False):
             state = State.objects.filter(state_values={})
         else:
             state = State.objects.filter(state_values=globals.INDICATOR_STATE)
         
         indicator_data = IndicatorData.objects.filter(
-            indicator=indicator[0],
-            state=state[0]
+            indicator=indicator.first(),
+            state=state.first()
         )
-        image_data = IndicatorImage.objects.filter(indicatorData=indicator_data[0])
-        return JsonResponse({'image_data': image_data[0].image.name})
+
+        image_data = IndicatorImage.objects.filter(indicatorData=indicator_data.first())
+        return JsonResponse({'image_data': image_data.first().image.name})
 
     @action(detail=False, methods=['get'])
     def get_geojson_data(self, request):
-        print(globals.INDICATOR_ID)
         indicator = Indicator.objects.filter(indicator_id=globals.INDICATOR_ID)
-        print(len(indicator))
-        if(len(indicator) == 1):
+        if(indicator.first().has_states == False):
             state = State.objects.filter(state_values={})
         else:
             state = State.objects.filter(state_values=globals.INDICATOR_STATE)
         
         indicator_data = IndicatorData.objects.filter(
-            indicator=indicator[0],
-            state=state[0]
+            indicator=indicator.first(),
+            state=state.first()
         )
-        geojson_data = IndicatorGeojson.objects.filter(indicatorData=indicator_data[0])
-        return JsonResponse({'geojson_data': geojson_data[0].geojson})
+        geojson_data = IndicatorGeojson.objects.filter(indicatorData=indicator_data.first())
+        return JsonResponse({'geojson_data': geojson_data.first().geojson})

@@ -5,7 +5,7 @@ class Indicator(models.Model):
     indicator_id = models.IntegerField()
     name = models.CharField(max_length=100)
     has_states = models.BooleanField(default=False)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
