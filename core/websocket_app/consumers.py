@@ -24,6 +24,7 @@ class GeneralConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
         self.active_channels[self.room_group_name].add(self.channel_name)
+        print(self.active_channels)
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -40,22 +41,23 @@ class GeneralConsumer(AsyncWebsocketConsumer):
 
     async def send_message(self, event):
         # Envía un mensaje a los clientes conectados
-        message = event['message']
-        await self.send(text_data=json.dumps({
-            'message': message
-        }))
+        # message = event['message']
+        # print(message)
+        # await self.send(text_data=json.dumps({
+        #     'message': message
+        # }))
+        pass
 
     async def update_data(self, event):
-        channel_type = event['channel_type']
-        print(self.active_channels)
-        # indicator_id = event['message']['indicator_id']
-        print(channel_type)
-        data = await self.dataUpdater.input_event(event)
-        print(data)
-        event = {
-            'message': data
-        }
         print(event)
+        # channel_type = event['channel_type']
+        # indicator_id = event['message']['indicator_id']
+        # data = await self.dataUpdater.input_event(event)
+        # print(data)
+        # event = {
+        #     'message': data
+        # }
+        # print(event)
         # await self.send_message(text_data = json.dumps(
         #        event
         #     )

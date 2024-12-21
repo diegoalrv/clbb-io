@@ -9,6 +9,8 @@ services:
       - ./core/.env  # Declara el archivo .env aquí
     volumes:
       - ./core/.:/app
+    depends_on:
+      - db
     networks:
       - clbb_core
 

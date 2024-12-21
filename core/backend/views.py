@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
+import json
 
 from .models import (
     Indicator, IndicatorData, IndicatorImage, IndicatorGeojson,
@@ -64,24 +65,25 @@ class CustomActionsViewSet(viewsets.ViewSet):
         # Enviar los datos al canal adecuado, en este caso 'map_channel' y 'dashboard_channel'
         # Puedes personalizar los nombres de los canales de acuerdo a tus necesidades
         try:
-            # Enviar el mensaje a ambos grupos de consumidores
+            channels = ['map_image', 'map_geojson', 'dashboard']
+            channel = channels[0]
+            # for channel in channels:
             async_to_sync(channel_layer.group_send)(
-                'map_image_channel',  # Enviar a los consumidores del mapa
+                f'{channel}_channel',  # Enviar a los consumidores del mapa
                 {
                     'type': 'update_data',  # El tipo de evento que el consumidor manejará
-                    'channel_type': 'map_image',
+                    'channel_type': channel,
                     'message': message
                 }
             )
-
-            async_to_sync(channel_layer.group_send)(
-                'dashboard_channel',  # Enviar a los consumidores del dashboard
-                {
-                    'type': 'update_data',
-                    'channel_type': 'dashboard',
-                    'message': message
-                }
-            )
+            # async_to_sync(channel_layer.group_send)(
+            #     'dashboard_channel',  # Enviar a los consumidores del dashboard
+            #     {
+            #         'type': 'update_data',
+            #         'channel_type': 'dashboard',
+            #         'message': message
+            #     }
+            # )
         
         except Exception as e:
             print(e)
@@ -146,21 +148,34 @@ class CustomActionsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def get_image_data(self, request):
-        indicator = Indicator.objects.get(id=globals.INDICATOR_ID)
-        if not indicator.has_state:
-            image_data = IndicatorImage.objects.get(indicator=indicator)
+        print(globals.INDICATOR_ID)
+        indicator = Indicator.objects.filter(indicator_id=globals.INDICATOR_ID)
+        print(len(indicator))
+        if(len(indicator) == 1):
+            state = State.objects.filter(state_values={})
         else:
-            state = State.objects.get(name=globals.INDICATOR_STATE)
-            image_data = IndicatorImage.objects.get(indicator=indicator, state=state)
-        return JsonResponse({'image_data': image_data})
+            state = State.objects.filter(state_values=globals.INDICATOR_STATE)
+        
+        indicator_data = IndicatorData.objects.filter(
+            indicator=indicator[0],
+            state=state[0]
+        )
+        image_data = IndicatorImage.objects.filter(indicatorData=indicator_data[0])
+        return JsonResponse({'image_data': image_data[0].image.name})
 
     @action(detail=False, methods=['get'])
     def get_geojson_data(self, request):
-        indicator = Indicator.objects.get(id=globals.INDICATOR_ID)
-        state = State.objects.get(name=globals.INDICATOR_STATE)
-        if not indicator.has_state:
-            geojson_data = IndicatorImage.objects.get(indicator=indicator)
+        print(globals.INDICATOR_ID)
+        indicator = Indicator.objects.filter(indicator_id=globals.INDICATOR_ID)
+        print(len(indicator))
+        if(len(indicator) == 1):
+            state = State.objects.filter(state_values={})
         else:
-            state = State.objects.get(name=globals.INDICATOR_STATE)
-            geojson_data = IndicatorImage.objects.get(indicator=indicator, state=state)
-        return JsonResponse({'geojson_data': geojson_data.get()})
+            state = State.objects.filter(state_values=globals.INDICATOR_STATE)
+        
+        indicator_data = IndicatorData.objects.filter(
+            indicator=indicator[0],
+            state=state[0]
+        )
+        geojson_data = IndicatorGeojson.objects.filter(indicatorData=indicator_data[0])
+        return JsonResponse({'geojson_data': geojson_data[0].geojson})

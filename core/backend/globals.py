@@ -1,7 +1,7 @@
 # Variables globales para la ejecución del server
 # Mantiene revisado que tipo de mapa y el estado de este (placas)
 
-INDICATOR_ID = 1
+INDICATOR_ID = 0
 INDICATOR_STATE = {
     1: 0,
     2: 0,

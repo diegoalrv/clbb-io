@@ -23,3 +23,5 @@ calculations/export/*
 .venv/
 migrations/
 *test*.html
+external_files/
+media/

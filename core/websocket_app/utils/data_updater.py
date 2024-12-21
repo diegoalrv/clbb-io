@@ -21,27 +21,28 @@ class DataUpdater:
     
     async def find_map(self, event):
         message = event.get('message', [])
-
+        print(message)
         self.indicator_id = message.get('indicator_id', 0)
         print(self.indicator_id)
-        self.indicator_id = int(self.indicator_id)
-        print(self.indicator_id)
 
-        # Obtener el indicador usando el método asíncrono
-        indicator_results = await self.get_indicator(self.indicator_id)
-        print(indicator_results)
+        # # Obtener el indicador usando el método asíncrono
+        # indicator_results = await self.get_indicator(self.indicator_id)
+        # print(indicator_results)
 
-        # Si no hay resultados
-        if not indicator_results:
-            return None
-        elif len(indicator_results) > 1:
-            states = message.get('states', {})
-            # Obtener los datos del indicador usando el método asíncrono
-            indicator_result = await self.get_indicator_data(self.indicator_id, states)
+        # # Si no hay resultados
+        # if not indicator_results:
+        #     return None
+        # elif len(indicator_results) > 1:
+        #     states = message.get('states', {})
+        #     # Obtener los datos del indicador usando el método asíncrono
+        # else:
+        #     states = {}
+
+        # indicator_result = await self.get_indicator_data(self.indicator_id, states)
         
-        indicator_result = indicator_results[0]        
-        print(indicator_result)
-        self.indicator_result = indicator_result
+        # indicator_result = indicator_results[0]        
+        # print(indicator_result)
+        # self.indicator_result = indicator_result
         pass
 
     async def find_dashboard(self, event):

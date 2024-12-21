@@ -12,7 +12,7 @@ class Indicator(models.Model):
 
 class State(models.Model):
     id = models.AutoField(primary_key=True)
-    state_values = models.JSONField(default=dict)  # Almacena los valores de estado en formato JSON
+    state_values = models.JSONField(default=dict, blank=True, null=True)  # Almacena los valores de estado en formato JSON
 
     def __str__(self):
         return f"State with values {self.state_values}"
