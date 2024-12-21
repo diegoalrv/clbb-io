@@ -5,7 +5,6 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.urls import path
 from websocket_app.routing import websocket_urlpatterns # <- Add this
 from channels.auth import AuthMiddlewareStack # <- Add this
-from websocket_app.consumers import MapConsumer, DashboardConsumer # <- Add this
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 

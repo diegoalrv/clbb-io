@@ -4,8 +4,6 @@ from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 
 from .models import (
     Indicator, IndicatorData, IndicatorImage, IndicatorGeojson,
@@ -48,71 +46,121 @@ class LayerConfigViewSet(viewsets.ModelViewSet):
 
 # Now lets program the views for the API as an interactive platform
 
-from .globals import (
-    INDICATOR_STATE, INDICATOR_ID, SLOTS_IDS
-)
+from . import globals
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
-@action(detail=False, methods=['get'])
-def check_and_send_data(request):
-    # Send data to all current clients connected to the server using websocket
+class CustomActionsViewSet(viewsets.ViewSet):
 
-    return JsonResponse({'status': 'ok'})
-    # channel_layer = get_channel_layer()
-    # async_to_sync(channel_layer.group_send)(
-    #     'clients_group',
-    #     {
-    #         'type': 'send_data',
-    #         'message': 'Data to be sent to clients'
-    #     }
-    # )
+    def check_and_send_data(self):
+        # Si la condición es válida, enviamos los datos a los consumidores
+        channel_layer = get_channel_layer()
+        message = {
+            'indicator_id': globals.INDICATOR_ID,
+            'indicator_state': globals.INDICATOR_STATE
+        }
+        print(message)
 
+        # Enviar los datos al canal adecuado, en este caso 'map_channel' y 'dashboard_channel'
+        # Puedes personalizar los nombres de los canales de acuerdo a tus necesidades
+        try:
+            # Enviar el mensaje a ambos grupos de consumidores
+            async_to_sync(channel_layer.group_send)(
+                'map_image_channel',  # Enviar a los consumidores del mapa
+                {
+                    'type': 'update_data',  # El tipo de evento que el consumidor manejará
+                    'channel_type': 'map_image',
+                    'message': message
+                }
+            )
 
-    pass
+            async_to_sync(channel_layer.group_send)(
+                'dashboard_channel',  # Enviar a los consumidores del dashboard
+                {
+                    'type': 'update_data',
+                    'channel_type': 'dashboard',
+                    'message': message
+                }
+            )
+        
+        except Exception as e:
+            print(e)
+    
+    @action(detail=False, methods=['get'])
+    def get_global_variables(self, request):
+        return JsonResponse({
+            'indicator_id': globals.INDICATOR_ID,
+            'indicator_state': globals.INDICATOR_STATE
+        })
 
-# I should be able to set the id of the current state of the interface
-@action(detail=False, methods=['post'])
-def set_current_indicator(request, indicator_id):
-    INDICATOR_ID = indicator_id
-    return JsonResponse({'status': 'ok'})
+    @action(detail=False, methods=['post'])
+    def set_current_indicator(self, request):
+        indicator_id = request.data.get('indicator_id', '')
+        if self._set_current_indicator(indicator_id):
+            return JsonResponse({'status': 'ok', 'indicator_id': indicator_id})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Failed to set current indicator'})
+    
+    def _set_current_indicator(self, indicator_id):
+        try:
+            globals.INDICATOR_ID = indicator_id
+            self.check_and_send_data()
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
-# I should be able to set the id of an indicator that i want
-@action(detail=False, methods=['post'])
-def set_current_state(request, state):
-    INDICATOR_STATE = state
-    return JsonResponse({'status': 'ok'})
+    @action(detail=False, methods=['post'])
+    def set_current_state(self, request):
+        state = request.data.get('state', '')
+        if self._set_current_state(state):
+            return JsonResponse({'status': 'ok', 'state': state})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Failed to set current state'})
 
-# I should be able to receive data from the RFID
-@action(detail=False, methods=['get'])
-def receive_data_from_rfid(request):
-    slots_param = request.GET.get('slots', '')
-    if slots_param:
-        print('list_temp ',globals.list_temp)
-        rfid_tags = sorted(slots_param.split(','))
-    # I should be able to receive data from the RFID and set the current state of the interface
-    for rfid_tag in rfid_tags:
-        (SLOT, STATE) = SLOTS_IDS[rfid_tag]
-        INDICATOR_ID[SLOT] = STATE
-    return JsonResponse({'status': 'ok'})
+    def _set_current_state(self, state):
+        try:
+            globals.INDICATOR_STATE = state
+            self.check_and_send_data()
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
-# I should request for the image data of the current indicator-state pair
-@action(detail=False, methods=['get'])
-def get_image_data(request):
-    indicator = Indicator.objects.get(id=INDICATOR_ID)
-    if not indicator.has_state:
-        image_data = IndicatorImage.objects.get(indicator=indicator)
-    else:
-        state = State.objects.get(name=INDICATOR_STATE)
-        image_data = IndicatorImage.objects.get(indicator=indicator, state=state)
-    return JsonResponse({'image_data': image_data})
+    @action(detail=False, methods=['get'])
+    def receive_data_from_rfid(self, request):
+        slots_param = request.GET.get('slots', '')
+        keys = globals.INDICATOR_STATE.keys()
+        states = {f"{key}": 0 for key in keys}
+        if slots_param:
+            print('list_temp ', globals.SLOTS_IDS)
+            rfid_tags = sorted(slots_param.split(','))
+            for pos, rfid_tag in enumerate(rfid_tags):
+                (SLOT, STATE) = globals.SLOTS_IDS[rfid_tag]
+                states[f'{SLOT}'] = STATE
+            
+            if self._set_current_state(states):
+                return JsonResponse({'status': 'ok', 'states': states})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Failed to set current state'})
 
-# I should be able to request for the geojson data of the current indicator-state pair
-@action(detail=False, methods=['get'])
-def get_geojson_data(request):
-    indicator = Indicator.objects.get(id=INDICATOR_ID)
-    state = State.objects.get(name=INDICATOR_STATE)
-    if not indicator.has_state:
-        geojson_data = IndicatorImage.objects.get(indicator=indicator)
-    else:
-        state = State.objects.get(name=INDICATOR_STATE)
-        geojson_data = IndicatorImage.objects.get(indicator=indicator, state=state)
-    return JsonResponse({'geojson_data': geojson_data.get()})
+    @action(detail=False, methods=['get'])
+    def get_image_data(self, request):
+        indicator = Indicator.objects.get(id=globals.INDICATOR_ID)
+        if not indicator.has_state:
+            image_data = IndicatorImage.objects.get(indicator=indicator)
+        else:
+            state = State.objects.get(name=globals.INDICATOR_STATE)
+            image_data = IndicatorImage.objects.get(indicator=indicator, state=state)
+        return JsonResponse({'image_data': image_data})
+
+    @action(detail=False, methods=['get'])
+    def get_geojson_data(self, request):
+        indicator = Indicator.objects.get(id=globals.INDICATOR_ID)
+        state = State.objects.get(name=globals.INDICATOR_STATE)
+        if not indicator.has_state:
+            geojson_data = IndicatorImage.objects.get(indicator=indicator)
+        else:
+            state = State.objects.get(name=globals.INDICATOR_STATE)
+            geojson_data = IndicatorImage.objects.get(indicator=indicator, state=state)
+        return JsonResponse({'geojson_data': geojson_data.get()})

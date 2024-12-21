@@ -2,7 +2,9 @@ from django.db import models
 
 class Indicator(models.Model):
     id = models.AutoField(primary_key=True)
+    indicator_id = models.IntegerField()
     name = models.CharField(max_length=100)
+    has_states = models.BooleanField(default=False)
     description = models.TextField()
 
     def __str__(self):
@@ -18,7 +20,6 @@ class State(models.Model):
 class IndicatorData(models.Model):
     id = models.AutoField(primary_key=True)
     indicator = models.ForeignKey(Indicator, on_delete=models.CASCADE, related_name='data')
-    has_states = models.BooleanField(default=False)
     state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='data')
 
     def __str__(self):
