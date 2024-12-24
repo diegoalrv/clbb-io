@@ -61,32 +61,6 @@ class CustomActionsViewSet(viewsets.ViewSet):
             'indicator_state': globals.INDICATOR_STATE
         }
         print(message)
-
-        # Enviar los datos al canal adecuado, en este caso 'map_channel' y 'dashboard_channel'
-        # Puedes personalizar los nombres de los canales de acuerdo a tus necesidades
-        # try:
-            # channels = ['map_image', 'map_geojson', 'dashboard']
-            # channel = channels[0]
-            # # for channel in channels:
-            # async_to_sync(channel_layer.group_send)(
-            #     f'{channel}_channel',  # Enviar a los consumidores del mapa
-            #     {
-            #         'type': 'update_data',  # El tipo de evento que el consumidor manejará
-            #         'channel_type': channel,
-            #         'message': message
-            #     }
-            # )
-            # async_to_sync(channel_layer.group_send)(
-            #     'dashboard_channel',  # Enviar a los consumidores del dashboard
-            #     {
-            #         'type': 'update_data',
-            #         'channel_type': 'dashboard',
-            #         'message': message
-            #     }
-            # )
-        
-        # except Exception as e:
-        #     print(e)
     
     @action(detail=False, methods=['get'])
     def get_global_variables(self, request):
@@ -115,6 +89,8 @@ class CustomActionsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
     def set_current_state(self, request):
         state = request.data.get('state', '')
+        if isinstance(state, str):
+            state = json.loads(state)
         if self._set_current_state(state):
             return JsonResponse({'status': 'ok', 'state': state})
         else:
