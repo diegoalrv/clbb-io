@@ -18,5 +18,8 @@ router.register(r'layer_config', viewsets.ModelViewSet , basename='layer_config'
 router.register(r'actions', CustomActionsViewSet, basename='actions')
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
+    path('set_map_state/', CustomActionsViewSet.receive_data_from_rfid, name='set_map_state'),
+    path('set_map_type/', CustomActionsViewSet.receive_data_from_buttons_page, name='set_map_type'),
+
 ]

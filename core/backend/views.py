@@ -113,14 +113,25 @@ class CustomActionsViewSet(viewsets.ViewSet):
         if slots_param:
             print('list_temp ', globals.SLOTS_IDS)
             rfid_tags = sorted(slots_param.split(','))
-            for pos, rfid_tag in enumerate(rfid_tags):
-                (SLOT, STATE) = globals.SLOTS_IDS[rfid_tag]
-                states[f'{SLOT}'] = STATE
-            
-            if self._set_current_state(states):
-                return JsonResponse({'status': 'ok', 'states': states})
+            if(len(rfid_tags) != len(globals.SLOTS_IDS)):
+                print(f'Number of tags reported: {len(rfid_tags)}')
             else:
-                return JsonResponse({'status': 'error', 'message': 'Failed to set current state'})
+                for pos, rfid_tag in enumerate(rfid_tags):
+                    (SLOT, STATE) = globals.SLOTS_IDS[rfid_tag]
+                    states[f'{SLOT}'] = STATE
+                
+                self._set_current_state(states)
+                # if self._set_current_state(states):
+                    # return JsonResponse({'status': 'ok', 'states': states})
+                # else:
+                    # return JsonResponse({'status': 'error', 'message': 'Failed to set current state'})
+
+    @action(detail=False, methods=['get'])
+    def receive_data_from_buttons_page(self, request):
+        print(request.body)
+        if request.method == 'GET':
+            type_param = request.GET.get('map_type', 1)
+            self._set_current_indicator(type_param)
 
     @action(detail=False, methods=['get'])
     def get_image_data(self, request):

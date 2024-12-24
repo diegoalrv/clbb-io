@@ -18,5 +18,4 @@ EXPOSE 9900
 
 # Start your application (you may need to adjust the command)
 CMD ["python", "manage.py", "runserver", "0.0.0.0:9900"]
-# CMD ["uvicorn", "apiv2.asgi:application", "--reload", "--host", "0.0.0.0", "--port", "9900"]
 
