@@ -163,3 +163,11 @@ class CustomActionsViewSet(viewsets.ViewSet):
         )
         geojson_data = IndicatorGeojson.objects.filter(indicatorData=indicator_data.first())
         return JsonResponse({'geojson_data': geojson_data.first().geojson})
+
+    @action(detail=False, methods=['get'])
+    def get_current_dashboard_data(self, request):
+        state = State.objects.filter(state_values=globals.INDICATOR_STATE)
+        dashboard_data = DashboardFeedState.objects.filter(
+            state=state.first()
+        ).first()
+        return JsonResponse({'data': dashboard_data.data, 'state': state.first().state_values})

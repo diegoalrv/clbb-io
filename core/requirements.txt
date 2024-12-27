@@ -3,6 +3,7 @@ djangorestframework
 channels[daphne]
 channels_redis
 djangochannelsrestframework
+django-cors-headers
 
 requests
 # uvicornS
