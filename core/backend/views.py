@@ -18,9 +18,10 @@ from .serializers import (
 )
 
 class IndicatorViewSet(viewsets.ModelViewSet):
-    queryset = Indicator.objects.all()
     serializer_class = IndicatorSerializer
-
+    def get_queryset(self):
+        return Indicator.objects.all()
+    
 class StateViewSet(viewsets.ModelViewSet):
     queryset = State.objects.all()
     serializer_class = StateSerializer
