@@ -30,18 +30,4 @@ SLOTS_IDS = {
     '26': (7, 1),
 }
 
-"""
-map_type value of each indicator map
-
- OK 1) Diversidad de Suelo
- OK 2) Educación
- OK 3) Proximidad de cultura
- OK 4) Población
- 5) Entretenimiento
- OK 6) Parques
- OK 7) Plazas
- 8) Aprovisionamiento
- 9) Comercio
- 10) Edificacion
- 10+1) Salud
-"""
+list_temp = []

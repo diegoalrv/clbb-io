@@ -11,5 +11,7 @@
     { "id": 10, "name": "Edificacion" , "states": 1},
     { "id": 11, "name": "Salud" , "states": 1},
     { "id": 12, "name": "Ciclovias Actuales", "states": 0},
-    { "id": 13, "name": "Ciclovias Futuras", "states": 0}
+    { "id": 13, "name": "Ciclovias Futuras", "states": 0},
+    { "id": 14, "name": "Ciclovias A+F", "states": 0},
+    { "id": 15, "name": "Agentes", "states": 0}
 ]

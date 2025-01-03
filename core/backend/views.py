@@ -106,26 +106,48 @@ class CustomActionsViewSet(viewsets.ViewSet):
             print(e)
             return False
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], url_path='set_map_state')
     def receive_data_from_rfid(self, request):
         slots_param = request.GET.get('slots', '')
+        # print('slots_param ', slots_param)
         keys = globals.INDICATOR_STATE.keys()
+        # print('INDICATOR_STATE', globals.INDICATOR_STATE)
+        print('list_temp', globals.list_temp)
         states = {f"{key}": 0 for key in keys}
+        # print('states ', states)
         if slots_param:
-            print('list_temp ', globals.SLOTS_IDS)
+            # print('globals.SLOTS_IDS', globals.SLOTS_IDS)
             rfid_tags = sorted(slots_param.split(','))
-            if(len(rfid_tags) != len(globals.SLOTS_IDS)):
-                print(f'Number of tags reported: {len(rfid_tags)}')
+            # print('rfid_tags ', rfid_tags)
+
+            # print('len(globals.list_temp)', len(globals.list_temp))
+            # print('len(globals.INDICATOR_STATE)', len(globals.INDICATOR_STATE))
+            if(len(globals.list_temp) != len(globals.INDICATOR_STATE)):
+                # print(f'Number of tags reported: {len(rfid_tags)}')
+                globals.list_temp += rfid_tags
+                globals.list_temp = list(set(globals.list_temp))
+                return JsonResponse({'status': 'ok', 'message': 'RFID tag has been saved'})
             else:
-                for pos, rfid_tag in enumerate(rfid_tags):
-                    (SLOT, STATE) = globals.SLOTS_IDS[rfid_tag]
-                    states[f'{SLOT}'] = STATE
-                
-                self._set_current_state(states)
-                # if self._set_current_state(states):
-                    # return JsonResponse({'status': 'ok', 'states': states})
-                # else:
-                    # return JsonResponse({'status': 'error', 'message': 'Failed to set current state'})
+                print('All tags reported')
+                for pos, rfid_tag in enumerate(globals.list_temp):
+                    # print('rfid_tag ', rfid_tag)
+                    if rfid_tag not in globals.SLOTS_IDS:
+                        continue
+                    else:
+                        # print(globals.SLOTS_IDS[rfid_tag])
+                        (SLOT, STATE) = globals.SLOTS_IDS[rfid_tag]
+                        # print('SLOT ', SLOT)
+                        # print('STATE ', STATE)
+                        states[f'{SLOT}'] = STATE
+                # print('states ', states)
+                setted = self._set_current_state(states)
+                globals.list_temp = []
+                # print('setted ', setted)
+                print('New state setted: ', globals.INDICATOR_STATE)
+                if setted:
+                    return JsonResponse({'status': 'ok', 'states': states})
+                else:
+                    return JsonResponse({'status': 'error', 'message': 'Failed to set current state'})
 
     @action(detail=False, methods=['get'])
     def receive_data_from_buttons_page(self, request):

@@ -24,6 +24,6 @@ router.register(r'actions', CustomActionsViewSet, basename='actions')
 
 
 urlpatterns = [
-    path('set_map_state/', CustomActionsViewSet.receive_data_from_rfid, name='set_map_state'),
-    path('set_map_type/', CustomActionsViewSet.receive_data_from_buttons_page, name='set_map_type'),
+    path('set_map_state/', CustomActionsViewSet.as_view({'get': 'receive_data_from_rfid'}), name='set_map_state'),
+    # path('set_map_type/', CustomActionsViewSet.receive_data_from_buttons_page, name='set_map_type'),
 ] + router.urls
