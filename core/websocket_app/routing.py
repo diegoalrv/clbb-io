@@ -1,7 +1,7 @@
-# websocket_app/routing.py
 from django.urls import re_path
-from .consumers import GeneralConsumer
+from . import consumers
 
 websocket_urlpatterns = [
-    re_path(r'ws/(?P<channel_type>\w+)/$', GeneralConsumer.as_asgi()),
+    re_path(r"^ws/echo/$", consumers.EchoConsumer.as_asgi()),
+    re_path(r"^ws/room/(?P<room_name>\w+)/$", consumers.RoomConsumer.as_asgi()),
 ]

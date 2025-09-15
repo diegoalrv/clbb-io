@@ -40,6 +40,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 INSTALLED_APPS = [
     'daphne', # ⬅ ASGI Webserver
+    'channels',
     'websocket_app', # ⬅ Django Channels App
     'django.contrib.admin',
     'django.contrib.auth',

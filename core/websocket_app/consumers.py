@@ -1,74 +1,76 @@
-# consumers.py
-from channels.generic.websocket import AsyncWebsocketConsumer
-from .utils.data_updater import DataUpdater
 import json
+import logging
+from channels.generic.websocket import AsyncWebsocketConsumer
 
-class GeneralConsumer(AsyncWebsocketConsumer):
-    def __init__(self, *args, **kwargs):        
-        self.dataUpdater = DataUpdater()
-        self.active_channels = {}
-        super().__init__(*args, **kwargs)
+logger = logging.getLogger(__name__)
 
+class EchoConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        # Obtenemos un parámetro del query string (puede ser 'map' o 'dashboard', por ejemplo)
-        self.channel_type = self.scope['url_route']['kwargs']['channel_type']  # 'map' o 'dashboard'
-        
-        # Determinamos el nombre del grupo dependiendo del tipo de canal
-        self.room_group_name = f'{self.channel_type}_channel'
-        
-        if self.room_group_name not in self.active_channels:
-            self.active_channels[self.room_group_name] = set()
-        
+        # Aquí puedes validar origen, auth, etc.
+        await self.accept()
+        await self.send_json({"type": "welcome", "message": "WebSocket conectado"})
+
+    async def receive(self, text_data=None, bytes_data=None):
+        # Loguea lo que llega (ahí “lees” el mensaje)
+        logger.info(f"[WS] text={text_data!r} bytes={bool(bytes_data)}")
+
+        # Intenta parsear JSON si viene en texto
+        payload = None
+        if text_data is not None:
+            try:
+                payload = json.loads(text_data)
+            except json.JSONDecodeError:
+                payload = {"raw": text_data}
+
+        # Respuesta simple tipo echo
+        await self.send_json({"type": "echo", "received": payload})
+
+    async def disconnect(self, close_code):
+        logger.info(f"[WS] desconectado code={close_code}")
+
+    # Helper para enviar JSON
+    async def send_json(self, obj: dict):
+        await self.send(text_data=json.dumps(obj))
+
+class RoomConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_name = self.scope['url_route']['kwargs']['room_name']
+        self.room_group_name = f"chat_{self.room_name}"
+
+        # Join room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
-        self.active_channels[self.room_group_name].add(self.channel_name)
-        print(self.active_channels)
+
         await self.accept()
 
     async def disconnect(self, close_code):
-        if self.room_group_name in self.active_channels:
-            self.active_channels[self.room_group_name].discard(self.channel_name)
-            if not self.active_channels[self.room_group_name]:  # Si no quedan más canales en el grupo, eliminar la entrada
-                del self.active_channels[self.room_group_name]
-
-        # Salir del grupo correspondiente
+        # Leave room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
-    async def send_message(self, event):
-        # Envía un mensaje a los clientes conectados
-        # message = event['message']
-        # print(message)
-        # await self.send(text_data=json.dumps({
-        #     'message': message
-        # }))
-        pass
+    # Receive message from WebSocket
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
 
-    async def update_data(self, event):
-        print(event)
-        # channel_type = event['channel_type']
-        # indicator_id = event['message']['indicator_id']
-        # data = await self.dataUpdater.input_event(event)
-        # print(data)
-        # event = {
-        #     'message': data
-        # }
-        # print(event)
-        # await self.send_message(text_data = json.dumps(
-        #        event
-        #     )
-        # )
+        # Send message to room group
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'chat_message',
+                'message': message
+            }
+        )
 
-        # print(self.results)
-        # if results:
-        #     for channel in 
-        #     await self.dataUpdater.send_data_to_channel()
-        # Envía un mensaje a los clientes conectados
-        # data = event['data']
-        # await self.send(text_data=json.dumps({
-        #     'data': data
-        # }))
+    # Receive message from room group
+    async def chat_message(self, event):
+        message = event['message']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
