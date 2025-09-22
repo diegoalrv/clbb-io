@@ -1,39 +1,19 @@
 from django.db import models
 from rest_framework import serializers
 from .models import (
-    Indicator, IndicatorData, IndicatorImage,
-    IndicatorGeojson, State, DashboardFeedState,
+    Layer,
+    LayerData,
     LayerConfig
 )
 
-class IndicatorSerializer(serializers.ModelSerializer):
+class LayerSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Indicator
+        model = Layer
         fields = '__all__'
 
-class StateSerializer(serializers.ModelSerializer):
+class LayerDataSerializer(serializers.ModelSerializer):
     class Meta:
-        model = State
-        fields = '__all__'
-
-class IndicatorDataSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = IndicatorData
-        fields = '__all__'
-
-class IndicatorImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = IndicatorImage
-        fields = '__all__'
-
-class IndicatorGeojsonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = IndicatorGeojson
-        fields = '__all__'
-
-class DashboardFeedStateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DashboardFeedState
+        model = LayerData
         fields = '__all__'
 
 class LayerConfigSerializer(serializers.ModelSerializer):

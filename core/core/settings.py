@@ -30,6 +30,7 @@ DEBUG = True
 # ALLOWED_HOSTS = ['localhost', '127.0.0.1', '::1', 'localhost:9901', 'nginx-front', 'localhost:8500', '192.168.31.120:8500']
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:9900',
     'http://localhost:9901',
     'http://127.0.0.1:9901',
     "http://192.168.31.120:8500",
@@ -90,10 +91,20 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
-}
+# DATABASES = {
+#     'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+# }
 
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "mydatabase",
+        "USER": "user",
+        "PASSWORD": "password",
+        "HOST": "core_db",
+        "PORT": "5432",
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
