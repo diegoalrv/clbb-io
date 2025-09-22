@@ -2,10 +2,10 @@ from django.contrib import admin
 
 from .models import (
     Layer,
-    LayerData,
-    LayerConfig
+    Data,
+    Config
 )
 
 admin.site.register(Layer)
-admin.site.register(LayerData)
-admin.site.register(LayerConfig)
+admin.site.register(Data)
+admin.site.register(Config)

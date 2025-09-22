@@ -4,8 +4,8 @@ from django.urls import path, include
 from .views import (
     CustomActionsViewSet,
     LayerViewSet,
-    LayerConfigViewSet,
-    LayerDataViewSet
+    ConfigViewSet,
+    DataViewSet
 )
 
 from django.db import models
@@ -15,10 +15,10 @@ from django.conf.urls.static import static
 
 router = DefaultRouter()
 
-router.register(r'layers', LayerViewSet, basename='layer')
-router.register(r'layer_data', LayerDataViewSet, basename='layer_data')
-router.register(r'layer_config', LayerConfigViewSet , basename='layer_config')
-router.register(r'actions', CustomActionsViewSet, basename='actions')
+router.register(r'layer', LayerViewSet, basename='layer')
+router.register(r'data', DataViewSet, basename='data')
+router.register(r'config', ConfigViewSet , basename='config')
+router.register(r'action', CustomActionsViewSet, basename='action')
 
 urlpatterns = [
     # path('set_map_state/', CustomActionsViewSet.as_view({'get': 'receive_data_from_rfid'}), name='set_map_state'),

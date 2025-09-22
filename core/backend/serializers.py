@@ -2,8 +2,8 @@ from django.db import models
 from rest_framework import serializers
 from .models import (
     Layer,
-    LayerData,
-    LayerConfig
+    Data,
+    Config
 )
 
 class LayerSerializer(serializers.ModelSerializer):
@@ -11,12 +11,12 @@ class LayerSerializer(serializers.ModelSerializer):
         model = Layer
         fields = '__all__'
 
-class LayerDataSerializer(serializers.ModelSerializer):
+class DataSerializer(serializers.ModelSerializer):
     class Meta:
-        model = LayerData
+        model = Data
         fields = '__all__'
 
-class LayerConfigSerializer(serializers.ModelSerializer):
+class ConfigSerializer(serializers.ModelSerializer):
     class Meta:
-        model = LayerConfig
+        model = Config
         fields = '__all__'

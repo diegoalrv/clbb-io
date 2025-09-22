@@ -5,24 +5,24 @@ class Layer(models.Model):
     type = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     description = models.TextField(max_length=255, blank=True, null=True)
+    # on = models.BooleanField(null=False, default=False)
 
     def __str__(self):
         return self.name
 
-class LayerData(models.Model):
+class Data(models.Model):
     id = models.AutoField(primary_key=True)
     layer = models.ForeignKey(Layer, on_delete=models.CASCADE, related_name='data')
-    file = models.FileField(upload_to='parquets/')  # stored in MEDIA_ROOT/parquets/
-    # data = models.JSONField()
+    file = models.FileField(upload_to='data/')  # stored in MEDIA_ROOT/data/
 
     def __str__(self):
         return f"Data {self.id}"
-    
-class LayerConfig(models.Model):
+
+class Config(models.Model):
     id = models.AutoField(primary_key=True)
     layer = models.ForeignKey(Layer, on_delete=models.CASCADE, related_name='config')
-    config = models.JSONField(default=dict)
+    processing_props = models.JSONField(default=dict)
+    render_props = models.JSONField(default=dict)
 
     def __str__(self):
-        return f"LayerConfig {self.id}"
-
+        return f"Config {self.id}"
