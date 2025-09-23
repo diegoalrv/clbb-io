@@ -4,7 +4,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from urllib.parse import parse_qs
 
-from backend.services.layer import set_layer_visibility
+from backend.services.data import set_config
 
 logger = logging.getLogger(__name__)
 
@@ -74,24 +74,20 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     'sender': self.channel_name
                 }
             )
-        elif action_type == 'set_layer_visibility':
+        elif action_type == 'set_config':
             layer_id = data.get('layer_id')
-            on = data.get('on')
+            content = data.get('content')
 
-            updated_layer_config = await database_sync_to_async(set_layer_visibility)(layer_id, on)
+            updated_layer_config = await database_sync_to_async(set_config)(layer_id, content)
 
             if updated_layer_config:
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
-                        'type': 'set_layer_visibility',
+                        'type': 'set_config',
                         'sender': self.channel_name,
-                        'content': {
-                            'id': layer_id,
-                            'config': {
-                                'on': updated_layer_config.config['on']
-                            }
-                        }
+                        'layer_id': layer_id,
+                        'content': content
                     }
                 )
             else:
@@ -99,37 +95,55 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     'type': 'error',
                     'message': f'Layer {layer_id} not found'
                 }))
-        # elif action_type == 'set_layer_config':
-        #     layer_id = data.get('layer_id')
-        #     config = data.get('config')
+        elif action_type == 'set_playing':
+            playing = data.get('playing')
 
-        #     updated_layer_config = await database_sync_to_async(set_layer_config)(layer_id, config)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'set_playing',
+                    'sender': self.channel_name,
+                    'playing': playing
+                }
+            )
+        elif action_type == 'set_time':
+            time = data.get('time')
 
-        #     if updated_layer_config:
-        #         await self.channel_layer.group_send(
-        #             self.room_group_name,
-        #             {
-        #                 'type': 'set_layer_config',
-        #                 'sender': self.channel_name,
-        #                 'content': {
-        #                     'id': layer_id,
-        #                     'config': updated_layer_config.config
-        #                 }
-        #             }
-        #         )
-        #     else:
-        #         await self.send(text_data=json.dumps({
-        #             'type': 'error',
-        #             'message': f'Layer {layer_id} not found'
-        #         }))
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'set_time',
+                    'sender': self.channel_name,
+                    'time': time
+                }
+            )
 
-    async def set_layer_visibility(self, event):
+    async def set_config(self, event):
         if event['sender'] == self.channel_name:
             return  # Don't echo back to sender
 
         await self.send(text_data=json.dumps({
             'type': 'layer_update',
+            'layer_id': event['layer_id'],
             'content': event['content']
+        }))
+
+    async def set_playing(self, event):
+        if event['sender'] == self.channel_name:
+            return  # Don't echo back to sender
+
+        await self.send(text_data=json.dumps({
+            'type': 'set_playing',
+            'playing': event['playing']
+        }))
+
+    async def set_time(self, event):
+        if event['sender'] == self.channel_name:
+            return  # Don't echo back to sender
+
+        await self.send(text_data=json.dumps({
+            'type': 'set_time',
+            'time': event['time']
         }))
 
     # Receive message from room group

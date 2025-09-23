@@ -5,7 +5,6 @@ class Layer(models.Model):
     type = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     description = models.TextField(max_length=255, blank=True, null=True)
-    # on = models.BooleanField(null=False, default=False)
 
     def __str__(self):
         return self.name
@@ -21,8 +20,8 @@ class Data(models.Model):
 class Config(models.Model):
     id = models.AutoField(primary_key=True)
     layer = models.ForeignKey(Layer, on_delete=models.CASCADE, related_name='config')
-    processing_props = models.JSONField(default=dict)
-    render_props = models.JSONField(default=dict)
+    modules = models.JSONField(default=dict)
+    props = models.JSONField(default=dict)
 
     def __str__(self):
         return f"Config {self.id}"

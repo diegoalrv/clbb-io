@@ -1,13 +1,9 @@
-from django.shortcuts import render
-from django.db import models
 from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.shortcuts import get_object_or_404
-import json
 
-from backend.services.layer import read_layer_data
+from backend.services.data import read_layer_data
 
 import pandas as pd
 import geopandas as gpd
@@ -64,15 +60,15 @@ class LayerViewSet(viewsets.ModelViewSet):
             if include_data:
                 data = layer.data.first()  # related_name='data'
                 if data:
-                    serialized['data'] = read_layer_data(data, layer)
-                else:
-                    serialized['data'] = f'http://localhost:9900/api/layer/{layer.id}/data/'
+                    serialized['data'] = read_layer_data(data)
+            else:
+                serialized['data'] = f'http://localhost:9900/api/layer/{layer.id}/data/'
 
             if include_config:
                 config = layer.config.first()  # related_name='config'
                 if config:
-                    serialized['processing_props'] = config.processing_props
-                    serialized['layer_props'] = config.layer_props
+                    serialized['modules'] = config.modules
+                    serialized['props'] = config.props
 
             response_data.append(serialized)
 
@@ -83,45 +79,14 @@ class LayerViewSet(viewsets.ModelViewSet):
         try:
             layer = Layer.objects.get(id=pk)
             data = layer.data.first()  # related_name='data'
-            read_layer_data(data)
+            json_data = read_layer_data(data)
+            return Response(json_data)
         except:
             return JsonResponse({'status': 'error', 'message': 'An error has ocurred'})
-    
-    # @action(detail=True, methods=['get'])
-    # def data(self, request, pk):
-    #     try:
-    #         layer = Layer.objects.get(id=pk)
-    #         data = Data.objects.get(layer=layer)
-    #         config = Config.objects.get(layer=layer)
-            
-    #         gdf = gpd.read_parquet(data.file.file)
-            
-    #         cmap = plt.cm.get_cmap(config.get('color_map'))
-    #         gdf['color'] = gdf['normalized'].apply(lambda c: colors.to_hex(cmap(c, True)))
-
-    #         match layer.get('type'):
-    #             case 'geojson':
-    #                 return JsonResponse({'status': 'ok', 'message': 'Layer does not exist'})
-    #                 to_path_data(gdf)
-    #             case _:
-    #                 pass
-
-    #     except Layer.DoesNotExist as e:
-    #         return JsonResponse({'status': 'error', 'message': 'Layer does not exist'})
-    #     except Data.DoesNotExist as e:
-    #         return JsonResponse({'status': 'error', 'message': 'Data does not exist for that layer'})
-    #     except Config.DoesNotExist as e:
-    #         return JsonResponse({'status': 'error', 'message': 'Config does not exist for that layer'})
 
 class DataViewSet(viewsets.ModelViewSet):
     queryset = Data.objects.all()
     serializer_class = DataSerializer
-
-    def retrieve(self, request, pk=None):
-        queryset = Data.objects.all()
-        data = get_object_or_404(queryset, pk=pk)
-        json_data = read_layer_data(data)
-        return Response(json_data)
 
 class ConfigViewSet(viewsets.ModelViewSet):
     queryset = Config.objects.all()
