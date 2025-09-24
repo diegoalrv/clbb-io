@@ -2,9 +2,12 @@ import geopandas as gpd
 import json
 import os
 
-from backend.models import Config
+from backend.models import Layer, Config, Data
 import matplotlib.pyplot as plt
 import numpy as np
+
+from django.http import FileResponse
+from rest_framework.response import Response
 
 # def set_layer_visibility(layer_id: int, on: bool):
 #     try:
@@ -57,34 +60,64 @@ def apply_colormap(gdf, column, colormap='viridis', vmin=None, vmax=None):
     gdf['color'] = [(int(r * 255), int(g * 255), int(b * 255), int(a * 255)) for r, g, b, a in colors]
     return gdf
 
-def read_layer_data(data):
+def read_layer_limits(data):
     try:
         file_path = data.file.path
-        print(file_path)
+        gdf = gpd.read_parquet(file_path)
+        
+        colormap = data.layer.config.first().modules.get('colormap', {})
+        column = colormap.get('column', 'value')
+        vmin = gdf[column].min()
+        vmax = gdf[column].max()
 
-        if data.layer.type == 'geojson':
+        return vmin, vmax
+    except:
+        return None, None
+
+def read_layer_data(data):
+        file_path = data.file.path
+
+        gdf = gpd.GeoDataFrame()
+        json_data = None
+
+        print('# Data reading')
+        # Data reading
+        if data.props.get('filetype') == 'parquet':
+            print('parquet')
             gdf = gpd.read_parquet(file_path)
-
-            try:
-                colormap_module = data.layer.config.first().modules.get('colormap', {})
-                
-                column = colormap_module.get('column', 'value')
-                cmap = colormap_module.get('cmap')
-                vmin = colormap_module.get('vmin')
-                vmax = colormap_module.get('vmax')
-                
-                gdf = apply_colormap(gdf, column, cmap, vmin, vmax)
-            except:
-                print('Exception ocurred setting color')
-
-            return gdf.to_geo_dict()
-        if data.layer.type == 'trips':
+        elif data.props.get('filetype') == 'shapefile':
+            print('shapefile')
+            gdf = gpd.read_file(file_path)
+        elif data.props.get('filetype') == 'json':
+            print('json')
             with open(file_path) as f:
-                geojson = json.load(f)
-            return geojson
-        else:
-            return None  # Or raise NotImplementedError
+                json_data = json.load(f)
+        elif data.props.get('filetype') == 'bin':
+            print('bin')
+            return FileResponse(open(file_path, 'rb'), content_type='application/octet-stream')
 
-    except Exception as e:
-        print(f"Failed to read file for layer {data.id}: {e}")
-        return None
+        print('# Module processing')
+        # Module processing
+        if not gdf.empty:
+            colormap = data.layer.config.first().modules.get('colormap', {})
+            column = colormap.get('column', 'value')
+            cmap = colormap.get('cmap')
+            vmin = colormap.get('vmin')
+            vmax = colormap.get('vmax')
+            gdf = apply_colormap(gdf, column, cmap, vmin, vmax)
+
+        print('# Response')
+        # Response
+        if data.layer.type == 'geojson':
+            return Response(gdf.to_geo_dict())
+        else:
+            return Response(json_data)
+
+# def get_layer_binary(request, layer_id):
+#     data = Data.objects.get(layer_id=layer_id)
+
+#     if data.props.get('filetype') != 'bin':
+#         return JsonResponse({'error': 'Not a binary file'}, status=400)
+
+#     file_path = data.file.path
+#     return FileResponse(open(file_path, 'rb'), content_type='application/octet-stream')

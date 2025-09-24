@@ -1,9 +1,9 @@
 from django.http import JsonResponse
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
-from backend.services.data import read_layer_data
+from backend.services.data import read_layer_data, read_layer_limits
 
 import pandas as pd
 import geopandas as gpd
@@ -34,6 +34,7 @@ import geopandas as gpd
 from .models import (
     Layer,
     Data,
+    # Texture,
     Config
 )
 
@@ -58,17 +59,52 @@ class LayerViewSet(viewsets.ModelViewSet):
             serialized = LayerSerializer(layer).data
 
             if include_data:
-                data = layer.data.first()  # related_name='data'
+                data = layer.data.filter(key='data').first()  # related_name='data'
                 if data:
                     serialized['data'] = read_layer_data(data)
             else:
-                serialized['data'] = f'http://localhost:9900/api/layer/{layer.id}/data/'
+                data_objs = layer.data.all()  # related_name='data'
+                serialized_data_objs = DataSerializer(data_objs, many=True).data
+                print('serialized_data_objs', serialized_data_objs)
+                # serialized_data_objs = []
+
+                # for data in data_objs:
+                #     serialized_data_objs.append({
+                #         'key': f'http://localhost:9900/api/layer/{layer.id}/data/?key={data.key}'
+                #         'url': f'http://localhost:9900/api/layer/{layer.id}/data/?key={data.key}'
+                #     })
+                serialized['data'] = [{
+                    'key': obj['key'],
+                    'type': obj['type'],
+                    'props': obj['props'],
+                    'url': f'http://localhost:9900/api/data/{obj["id"]}/data/'
+                } for obj in serialized_data_objs]
 
             if include_config:
                 config = layer.config.first()  # related_name='config'
-                if config:
-                    serialized['modules'] = config.modules
-                    serialized['props'] = config.props
+                try:
+                    assert config
+                    colormap = config.modules.get('colormap')
+
+                    assert colormap
+                    if (colormap['vmin'] == None or colormap['vmax'] == None):
+                        vmin, vmax = read_layer_limits(layer.data.first())
+                        config.modules['colormap'] = {
+                            **config.modules['colormap'],
+                            'vmin': vmin,
+                            'vmax': vmax
+                        }
+                        config.save()
+                except:
+                    pass
+
+                serialized['modules'] = config.modules
+                serialized['props'] = config.props
+
+                # serialized_config = ConfigSerializer(config).data
+                # serialized['config'] = serialized_config
+                # del serialized['config']['id']
+                # del serialized['config']['layer']
 
             response_data.append(serialized)
 
@@ -78,15 +114,37 @@ class LayerViewSet(viewsets.ModelViewSet):
     def data(self, request, pk):
         try:
             layer = Layer.objects.get(id=pk)
-            data = layer.data.first()  # related_name='data'
-            json_data = read_layer_data(data)
-            return Response(json_data)
         except:
-            return JsonResponse({'status': 'error', 'message': 'An error has ocurred'})
+            return JsonResponse({'status': 'error', 'message': 'layer'})
+        
+        try:
+            key = request.GET.get('key', 'data')
+        except:
+            return JsonResponse({'status': 'error', 'message': 'key'})
+        
+        try:
+            data = layer.data.filter(key=key).first()  # related_name='data'
+        except:
+            return JsonResponse({'status': 'error', 'message': 'data'})
+        
+        try:
+            return read_layer_data(data)
+        except:
+            return JsonResponse({'status': 'error', 'message': 'read and ret'})
+
+        return JsonResponse({'status': 'error', 'message': 'An error has ocurred'})
 
 class DataViewSet(viewsets.ModelViewSet):
     queryset = Data.objects.all()
     serializer_class = DataSerializer
+
+    @action(detail=True, methods=['get'])
+    def data(self, request, pk):
+        instance = Data.objects.get(pk=pk)
+        return read_layer_data(instance)
+
+# class TextureViewSet(viewsets.ModelViewSet):
+    # queryset = Texture.objects.all()
 
 class ConfigViewSet(viewsets.ModelViewSet):
     queryset = Config.objects.all()
