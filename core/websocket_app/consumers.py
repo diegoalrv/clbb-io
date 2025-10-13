@@ -95,27 +95,28 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     'type': 'error',
                     'message': f'Layer {layer_id} not found'
                 }))
-        elif action_type == 'set_playing':
+        elif action_type == 'set_timer':
             playing = data.get('playing')
-
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'set_playing',
-                    'sender': self.channel_name,
-                    'playing': playing
-                }
-            )
-        elif action_type == 'set_time':
             time = data.get('time')
+            length = data.get('length')
+
+            msg = {
+                'type': 'set_timer',
+                'sender': self.channel_name
+            }
+
+            if playing != None:
+                msg['playing'] = playing
+                
+            if time != None:
+                msg['time'] = time
+                
+            if length != None:
+                msg['length'] = length
 
             await self.channel_layer.group_send(
                 self.room_group_name,
-                {
-                    'type': 'set_time',
-                    'sender': self.channel_name,
-                    'time': time
-                }
+                msg
             )
 
     async def set_config(self, event):
@@ -128,23 +129,26 @@ class RoomConsumer(AsyncWebsocketConsumer):
             'content': event['content']
         }))
 
-    async def set_playing(self, event):
+    async def set_timer(self, event):
         if event['sender'] == self.channel_name:
             return  # Don't echo back to sender
 
-        await self.send(text_data=json.dumps({
-            'type': 'set_playing',
-            'playing': event['playing']
-        }))
+        playing = event.get('playing')
+        time = event.get('time')
+        length = event.get('length')
 
-    async def set_time(self, event):
-        if event['sender'] == self.channel_name:
-            return  # Don't echo back to sender
+        msg = {'type': 'set_timer'}
 
-        await self.send(text_data=json.dumps({
-            'type': 'set_time',
-            'time': event['time']
-        }))
+        if playing != None:
+            msg['playing'] = playing
+            
+        if time != None:
+            msg['time'] = time
+            
+        if length != None:
+            msg['length'] = length
+
+        await self.send(text_data=json.dumps(msg))
 
     # Receive message from room group
     async def chat_message(self, event):

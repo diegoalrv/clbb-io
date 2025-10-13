@@ -24,25 +24,17 @@ from rest_framework.response import Response
 def set_config(layer_id: int, content: dict):
     try:
         config = Config.objects.get(layer__id=layer_id)
-        print("layer_id", layer_id)
-        print("config", config)
 
-        print("config.modules before", config.modules)
         for module_key, module in content.get('modules', {}).items():
-            print("module", module_key)
             if config.modules[module_key]:
-                print("already has module", module_key)
                 for property_key, property in module.items():
-                    print("property", property_key)
                     config.modules[module_key][property_key] = property
             else:
-                print("it had not module", module_key)
                 config.modules[module_key] = module
 
         # config.props = {**config.props, **content.props}
 
         config.save()
-        print("config.modules after", config.modules)
         return config
     except Config.DoesNotExist:
         return None
@@ -52,23 +44,58 @@ def apply_colormap(gdf, column, colormap='viridis', vmin=None, vmax=None):
     vmin = vmin if vmin is not None else values.min()
     vmax = vmax if vmax is not None else values.max()
 
-    print(vmin, vmax)
-    
     cmap = plt.get_cmap(colormap)
     norm = plt.Normalize(vmin=vmin, vmax=vmax)
     colors = [cmap(norm(val)) for val in values]
     gdf['color'] = [(int(r * 255), int(g * 255), int(b * 255), int(a * 255)) for r, g, b, a in colors]
     return gdf
 
-def read_layer_limits(data):
+def read_layer_limits(data, pass_column=None):
+    print('pass_column: ', pass_column)
     try:
         file_path = data.file.path
-        gdf = gpd.read_parquet(file_path)
-        
-        colormap = data.layer.config.first().modules.get('colormap', {})
-        column = colormap.get('column', 'value')
-        vmin = gdf[column].min()
-        vmax = gdf[column].max()
+
+        if data.props.get('filetype') == 'parquet':
+            gdf = gpd.read_parquet(file_path)
+
+            try:
+                column_module = data.layer.config.first().modules.get('column', {})
+                column = column_module['columns'][column_module['selected']]
+            except:
+                column = 'value'
+
+            vmin = gdf[column if pass_column == None else pass_column].min()
+            vmax = gdf[column if pass_column == None else pass_column].max()
+        elif data.props.get('filetype') == 'shapefile':
+            gdf = gpd.read_file(file_path)
+
+            try:
+                column_module = data.layer.config.first().modules.get('column', {})
+                column = column_module['columns'][column_module['selected']]
+            except:
+                column = 'value'
+
+            vmin = gdf[column if pass_column == None else pass_column].min()
+            vmax = gdf[column if pass_column == None else pass_column].max()
+        elif data.props.get('filetype') == 'json':
+            with open(file_path) as f:
+                json_data = json.load(f)
+            
+            print('name', data.layer.name, 'type', data.layer.type)
+            if data.layer.type == 'h3':
+                column_module = data.layer.config.first().modules.get('column', {})
+                column = column_module['columns'][column_module['selected']]
+                
+                day_module = data.layer.config.first().modules.get('day', {})
+                day = day_module['options'][day_module['selected']]
+
+                values_arr = np.array([d['values'][day][0][column if pass_column == None else pass_column] for d in json_data])
+                vmin = values_arr.min()
+                vmax = values_arr.max()
+                print(vmin, vmax)
+
+        elif data.props.get('filetype') == 'bin':
+            return FileResponse(open(file_path, 'rb'), content_type='application/octet-stream')
 
         return vmin, vmax
     except:
@@ -96,15 +123,15 @@ def read_layer_data(data):
             print('bin')
             return FileResponse(open(file_path, 'rb'), content_type='application/octet-stream')
 
-        print('# Module processing')
-        # Module processing
-        if not gdf.empty:
-            colormap = data.layer.config.first().modules.get('colormap', {})
-            column = colormap.get('column', 'value')
-            cmap = colormap.get('cmap')
-            vmin = colormap.get('vmin')
-            vmax = colormap.get('vmax')
-            gdf = apply_colormap(gdf, column, cmap, vmin, vmax)
+        # print('# Module processing')
+        # # Module processing
+        # if not gdf.empty:
+        #     colormap = data.layer.config.first().modules.get('colormap', {})
+        #     column = colormap.get('column', 'value')
+        #     cmap = colormap.get('cmap')
+        #     vmin = colormap.get('vmin')
+        #     vmax = colormap.get('vmax')
+        #     gdf = apply_colormap(gdf, column, cmap, vmin, vmax)
 
         print('# Response')
         # Response

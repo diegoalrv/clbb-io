@@ -51,6 +51,7 @@ class LayerViewSet(viewsets.ModelViewSet):
     def list(self, request):
         include_data = request.GET.get('data') == 'true'
         include_config = request.GET.get('config') == 'true'
+        refresh_limits = request.GET.get('limits') == 'true'
 
         layers = Layer.objects.all()
         response_data = []
@@ -59,10 +60,6 @@ class LayerViewSet(viewsets.ModelViewSet):
             serialized = LayerSerializer(layer).data
 
             if include_data:
-                data = layer.data.filter(key='data').first()  # related_name='data'
-                if data:
-                    serialized['data'] = read_layer_data(data)
-            else:
                 data_objs = layer.data.all()  # related_name='data'
                 serialized_data_objs = DataSerializer(data_objs, many=True).data
                 print('serialized_data_objs', serialized_data_objs)
@@ -74,6 +71,7 @@ class LayerViewSet(viewsets.ModelViewSet):
                 #         'url': f'http://localhost:9900/api/layer/{layer.id}/data/?key={data.key}'
                 #     })
                 serialized['data'] = [{
+                    'id': obj['id'],
                     'key': obj['key'],
                     'type': obj['type'],
                     'props': obj['props'],
@@ -87,14 +85,19 @@ class LayerViewSet(viewsets.ModelViewSet):
                     colormap = config.modules.get('colormap')
 
                     assert colormap
-                    if (colormap['vmin'] == None or colormap['vmax'] == None):
-                        vmin, vmax = read_layer_limits(layer.data.first())
-                        config.modules['colormap'] = {
-                            **config.modules['colormap'],
-                            'vmin': vmin,
-                            'vmax': vmax
+                    vmin, vmax = read_layer_limits(layer.data.first())
+                    config.modules['colormap'] = {
+                        **config.modules['colormap'],
+                        'vmin': {
+                            **config.modules['colormap']['vmin'],
+                            'default': vmin,
+                        },
+                        'vmax': {
+                            **config.modules['colormap']['vmax'],
+                            'default': vmax,
                         }
-                        config.save()
+                    }
+                    config.save()
                 except:
                     pass
 
@@ -114,25 +117,32 @@ class LayerViewSet(viewsets.ModelViewSet):
     def data(self, request, pk):
         try:
             layer = Layer.objects.get(id=pk)
-        except:
-            return JsonResponse({'status': 'error', 'message': 'layer'})
-        
-        try:
             key = request.GET.get('key', 'data')
-        except:
-            return JsonResponse({'status': 'error', 'message': 'key'})
-        
-        try:
             data = layer.data.filter(key=key).first()  # related_name='data'
-        except:
-            return JsonResponse({'status': 'error', 'message': 'data'})
-        
-        try:
             return read_layer_data(data)
         except:
-            return JsonResponse({'status': 'error', 'message': 'read and ret'})
-
-        return JsonResponse({'status': 'error', 'message': 'An error has ocurred'})
+            return JsonResponse({'status': 'error', 'message': 'An error has ocurred'})
+    
+    @action(detail=True, methods=['get'])
+    def limits(self, request, pk):
+        try:
+            column_id = int(request.GET.get('columnId', 0))
+            print('column_id: ', column_id)
+            layer = Layer.objects.get(id=pk)
+            print('layer: ', layer)
+            print('modules: ', layer.config.first().modules)
+            column = layer.config.first().modules.get('column', {}).get('columns', ['value'])[column_id]
+            print('column: ', column)
+            # key = request.GET.get('key', 'data')
+            key = 'data'
+            print('key: ', key)
+            data = layer.data.filter(key=key).first()  # related_name='data'
+            print('data: ', data)
+            vmin, vmax = read_layer_limits(data, column)
+            print('vmin: ', vmin, 'vmax', vmax)
+            return JsonResponse({'status': 'ok', 'vmin': vmin, 'vmax': vmax})
+        except:
+            return JsonResponse({'status': 'error', 'message': 'An error has ocurred'})
 
 class DataViewSet(viewsets.ModelViewSet):
     queryset = Data.objects.all()
