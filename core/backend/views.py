@@ -3,7 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
-from backend.services.data import read_layer_data, read_layer_limits
+from backend.services.layer import read_layer_data, read_layer_limits
 
 import pandas as pd
 import geopandas as gpd
@@ -32,87 +32,45 @@ import geopandas as gpd
 #     return [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255), int(alpha)]
 
 from .models import (
+    GlobalVariable,
     Layer,
+    State,
+    Selection,
+    Option,
+    LayerSelection,
+    Colormap,
     Data,
-    # Texture,
-    Config
+    LayerData,
+    Texture,
 )
 
 from .serializers import (
+    GlobalVariableSerializer,
     LayerSerializer,
+    StateSerializer,
+    SelectionSerializer,
+    OptionSerializer,
+    LayerSelectionSerializer,
+    ColormapSerializer,
     DataSerializer,
-    ConfigSerializer
+    LayerDataSerializer,
+    TextureSerializer
+    # ConfigSerializer
 )
+
+class GlobalVariableViewSet(viewsets.ModelViewSet):
+    queryset = GlobalVariable.objects.all()
+    serializer_class = GlobalVariableSerializer
 
 class LayerViewSet(viewsets.ModelViewSet):
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer
 
     def list(self, request):
-        include_data = request.GET.get('data') == 'true'
-        include_config = request.GET.get('config') == 'true'
-        refresh_limits = request.GET.get('limits') == 'true'
-
         layers = Layer.objects.all()
-        response_data = []
+        serialized = LayerSerializer(layers, many=True).data
+        return Response(serialized)
 
-        for layer in layers:
-            serialized = LayerSerializer(layer).data
-
-            if include_data:
-                data_objs = layer.data.all()  # related_name='data'
-                serialized_data_objs = DataSerializer(data_objs, many=True).data
-                print('serialized_data_objs', serialized_data_objs)
-                # serialized_data_objs = []
-
-                # for data in data_objs:
-                #     serialized_data_objs.append({
-                #         'key': f'http://localhost:9900/api/layer/{layer.id}/data/?key={data.key}'
-                #         'url': f'http://localhost:9900/api/layer/{layer.id}/data/?key={data.key}'
-                #     })
-                serialized['data'] = [{
-                    'id': obj['id'],
-                    'key': obj['key'],
-                    'type': obj['type'],
-                    'props': obj['props'],
-                    'url': f'http://localhost:9900/api/data/{obj["id"]}/data/'
-                } for obj in serialized_data_objs]
-
-            if include_config:
-                config = layer.config.first()  # related_name='config'
-                try:
-                    assert config
-                    colormap = config.modules.get('colormap')
-
-                    assert colormap
-                    vmin, vmax = read_layer_limits(layer.data.first())
-                    config.modules['colormap'] = {
-                        **config.modules['colormap'],
-                        'vmin': {
-                            **config.modules['colormap']['vmin'],
-                            'default': vmin,
-                        },
-                        'vmax': {
-                            **config.modules['colormap']['vmax'],
-                            'default': vmax,
-                        }
-                    }
-                    config.save()
-                except:
-                    pass
-
-                serialized['modules'] = config.modules
-                serialized['props'] = config.props
-
-                # serialized_config = ConfigSerializer(config).data
-                # serialized['config'] = serialized_config
-                # del serialized['config']['id']
-                # del serialized['config']['layer']
-
-            response_data.append(serialized)
-
-        return Response(response_data)
-    
     @action(detail=True, methods=['get'])
     def data(self, request, pk):
         try:
@@ -148,17 +106,45 @@ class DataViewSet(viewsets.ModelViewSet):
     queryset = Data.objects.all()
     serializer_class = DataSerializer
 
-    @action(detail=True, methods=['get'])
-    def data(self, request, pk):
-        instance = Data.objects.get(pk=pk)
-        return read_layer_data(instance)
-
 # class TextureViewSet(viewsets.ModelViewSet):
     # queryset = Texture.objects.all()
 
-class ConfigViewSet(viewsets.ModelViewSet):
-    queryset = Config.objects.all()
-    serializer_class = ConfigSerializer
+# class ConfigViewSet(viewsets.ModelViewSet):
+#     queryset = Config.objects.all()
+#     serializer_class = ConfigSerializer
+
+class StateViewSet(viewsets.ModelViewSet):
+    queryset = State.objects.all()
+    serializer_class = StateSerializer
+
+class SelectionViewSet(viewsets.ModelViewSet):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionSerializer
+
+class OptionViewSet(viewsets.ModelViewSet):
+    queryset = Option.objects.all()
+    serializer_class = OptionSerializer
+
+class LayerSelectionViewSet(viewsets.ModelViewSet):
+    queryset = LayerSelection.objects.all()
+    serializer_class = LayerSelectionSerializer
+
+class ColormapViewSet(viewsets.ModelViewSet):
+    queryset = Colormap.objects.all()
+    serializer_class = ColormapSerializer
+
+class LayerDataViewSet(viewsets.ModelViewSet):
+    queryset = LayerData.objects.all()
+    serializer_class = LayerDataSerializer
+
+    @action(detail=True, methods=['get'])
+    def read(self, request, pk):
+        instance = LayerData.objects.get(pk=pk)
+        return read_layer_data(instance)
+
+class TextureViewSet(viewsets.ModelViewSet):
+    queryset = Texture.objects.all()
+    serializer_class = TextureSerializer
 
 # Now lets program the views for the API as an interactive platform
 

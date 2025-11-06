@@ -4,7 +4,10 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from urllib.parse import parse_qs
 
-from backend.services.data import set_config
+from backend.services.layer import set_layer_state, set_layer_colormap
+# from backend.services.data import set_config
+
+from django.conf import global_settings
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +67,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         action_type = data.get('type')
 
+        print(data)
+        
         if action_type == 'chat_message':
             message = data.get('message')
             await self.channel_layer.group_send(
@@ -74,50 +79,87 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     'sender': self.channel_name
                 }
             )
-        elif action_type == 'set_config':
-            layer_id = data.get('layer_id')
-            content = data.get('content')
 
-            updated_layer_config = await database_sync_to_async(set_config)(layer_id, content)
+        elif action_type == 'set_layer_state':
+            content = data.get('data')
+            
+            state = content.get('state')
+            layer_id = content.get('layer_id')
 
-            if updated_layer_config:
+            updated_layer_state = await database_sync_to_async(set_layer_state)(layer_id, state)
+
+            if updated_layer_state:
+                msg = {
+                    **data,
+                    'sender': self.channel_name,
+                }
+
                 await self.channel_layer.group_send(
                     self.room_group_name,
-                    {
-                        'type': 'set_config',
-                        'sender': self.channel_name,
-                        'layer_id': layer_id,
-                        'content': content
-                    }
+                    msg
                 )
+
             else:
                 await self.send(text_data=json.dumps({
                     'type': 'error',
                     'message': f'Layer {layer_id} not found'
                 }))
-        elif action_type == 'set_timer':
-            playing = data.get('playing')
-            time = data.get('time')
-            length = data.get('length')
 
+        elif action_type == 'set_layer_colormap_state':
+            content = data.get('data')
+            
+            colormap = content.get('colormap')
+            layer_id = content.get('layer_id')
+
+            updated_layer_colormap = await database_sync_to_async(set_layer_colormap)(layer_id, colormap)
+
+            if updated_layer_colormap:
+                msg = {
+                    **data,
+                    'sender': self.channel_name,
+                }
+
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    msg
+                )
+
+            else:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': f'Layer {layer_id} not found'
+                }))
+
+        elif action_type in ['set_time_state', 'ask_time_state', 'set_selection_state']:
             msg = {
-                'type': 'set_timer',
-                'sender': self.channel_name
+                **data,
+                'sender': self.channel_name,
             }
-
-            if playing != None:
-                msg['playing'] = playing
-                
-            if time != None:
-                msg['time'] = time
-                
-            if length != None:
-                msg['length'] = length
 
             await self.channel_layer.group_send(
                 self.room_group_name,
                 msg
             )
+
+        # elif action_type == 'set_selection_state':
+        #     msg = {
+        #         **data,
+        #         'sender': self.channel_name,
+        #     }
+
+        #     await self.channel_layer.group_send(
+        #         self.room_group_name,
+        #         msg
+        #     )
+
+    async def set_layer_state(self, event):
+        if event['sender'] == self.channel_name:
+            return  # Don't echo back to sender
+
+        await self.send(text_data=json.dumps({
+            'type': event['type'],
+            'data': event['data']
+        }))
 
     async def set_config(self, event):
         if event['sender'] == self.channel_name:
@@ -129,26 +171,29 @@ class RoomConsumer(AsyncWebsocketConsumer):
             'content': event['content']
         }))
 
-    async def set_timer(self, event):
+    async def set_time_state(self, event):
         if event['sender'] == self.channel_name:
             return  # Don't echo back to sender
 
-        playing = event.get('playing')
-        time = event.get('time')
-        length = event.get('length')
+        await self.send(text_data=json.dumps(event))
 
-        msg = {'type': 'set_timer'}
+    async def ask_time_state(self, event):
+        if event['sender'] == self.channel_name:
+            return  # Don't echo back to sender
 
-        if playing != None:
-            msg['playing'] = playing
+        await self.send(text_data=json.dumps(event))
+
+    async def set_selection_state(self, event):
+        if event['sender'] == self.channel_name:
+            return  # Don't echo back to sender
             
-        if time != None:
-            msg['time'] = time
-            
-        if length != None:
-            msg['length'] = length
+        await self.send(text_data=json.dumps(event))
 
-        await self.send(text_data=json.dumps(msg))
+    async def set_layer_colormap_state(self, event):
+        if event['sender'] == self.channel_name:
+            return  # Don't echo back to sender
+            
+        await self.send(text_data=json.dumps(event))
 
     # Receive message from room group
     async def chat_message(self, event):
