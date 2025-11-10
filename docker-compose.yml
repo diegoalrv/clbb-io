@@ -3,24 +3,28 @@ services:
   api:
     container_name: core_api
     build: ./core/.
-    ports:
-      - "${API_PORT}:${API_PORT}"  # Usa la variable API_PORT desde el archivo .env
-    env_file:
-      - ./core/.env  # Declara el archivo .env aquí
     volumes:
       - ./core/.:/app
     depends_on:
+<<<<<<< Updated upstream
       - db
+=======
+      - ms_db
+    ports:
+      - 9900:9900
+>>>>>>> Stashed changes
     networks:
       - clbb_core
 
   db:
     container_name: core_db
     image: postgres:latest
-    env_file:
-      - ./core/.env  # También carga el archivo .env para este servicio si es necesario
     volumes:
+<<<<<<< Updated upstream
       - postgres_data_core:/var/lib/postgresql/data
+=======
+      - postgres_data_ms:/var/lib/postgresql
+>>>>>>> Stashed changes
     networks:
       - clbb_core
     environment:
@@ -28,8 +32,9 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     ports:
-      - "5432:5432"
+      - 5432:5432
 
+<<<<<<< Updated upstream
   redis:
     image: redis:alpine
     container_name: redis
@@ -38,6 +43,16 @@ services:
     restart: always
     networks:
       - clbb_core
+=======
+  ms_redis:
+    image: redis:alpine
+    container_name: ms_redis
+    ports:
+      - 6379:6379
+    restart: always
+    networks:
+      - clbb_ms_network
+>>>>>>> Stashed changes
 
 
 networks:
